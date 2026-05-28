@@ -29,7 +29,7 @@ app.get('/api/news', async (req, res) => {
   try {
     // Attempt to fetch from typical wordpress feed URLs
     const feed = await parser.parseURL('https://www.vitrinedosul.com.br/rss.xml');
-    const items = feed.items.slice(0, 3).map(item => {
+    const items = feed.items.slice(0, 9).map(item => {
       // try to extract image from content or media
       let imageUrl = null;
       const imgRegex = /<img[^>]+src="([^">]+)"/g;
@@ -46,6 +46,11 @@ app.get('/api/news', async (req, res) => {
       
       if (!imageUrl && item.content) {
         const match = imgRegex.exec(item.content);
+        if (match && match[1]) imageUrl = match[1];
+      }
+      
+      if (!imageUrl && item.description) {
+        const match = imgRegex.exec(item.description);
         if (match && match[1]) imageUrl = match[1];
       }
 

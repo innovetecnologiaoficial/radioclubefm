@@ -35,6 +35,11 @@ import {
   MapPin,
   Megaphone,
   ExternalLink,
+  Target,
+  Users,
+  TrendingUp,
+  Phone,
+  Mail,
 } from "lucide-react";
 
 interface NewsItem {
@@ -112,6 +117,7 @@ export default function App() {
   const [clubeEmail, setClubeEmail] = useState("");
   const [clubePhone, setClubePhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAnunciarModal, setShowAnunciarModal] = useState(false);
 
 
 
@@ -719,72 +725,60 @@ export default function App() {
               </p>
             </div>
           ) : news.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-              {/* Highlight News (First Item) */}
-              <a
-                href={news[0].link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group lg:col-span-7 flex flex-col rounded-[2rem] overflow-hidden relative isolate min-h-[400px] lg:min-h-[500px]"
-              >
-                <img
-                  src={news[0].imageUrl}
-                  alt={news[0].title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 -z-20"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent -z-10"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {news.map((item, idx) => {
+                const imagem = item.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80";
+                
+                // Remove HTML da descrição de forma limpa
+                const cleanDesc = item.description
+                  ? item.description.replace(/<[^>]*>/g, "").substring(0, 180) + "..."
+                  : "";
 
-                <div className="p-8 lg:p-10 flex flex-col justify-end h-full mt-auto">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <span className="bg-[#ff3e5e] text-white text-[11px] font-black uppercase px-3 py-1 rounded-full tracking-wider">
-                      DESTAQUE
-                    </span>
-                    <span className="text-white/80 text-sm font-semibold tracking-wide">
-                      {new Date(news[0].pubDate).toLocaleDateString("pt-BR")}
-                    </span>
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 group-hover:text-[#fce315] transition-colors leading-[1.15] tracking-tight">
-                    {news[0].title}
-                  </h3>
-                  <p
-                    className="text-white/80 text-sm sm:text-base line-clamp-2 md:line-clamp-3 font-medium max-w-2xl"
-                    dangerouslySetInnerHTML={{ __html: news[0].description }}
-                  ></p>
-                </div>
-              </a>
-
-              {/* Side News (Next 2 Items) */}
-              <div className="lg:col-span-5 flex flex-col gap-6 lg:gap-8">
-                {news.slice(1, 3).map((item, idx) => (
-                  <a
+                return (
+                  <div
                     key={idx}
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group bg-white rounded-[2rem] p-4 flex flex-col sm:flex-row gap-5 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 border border-slate-100 flex-1"
+                    className="group bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_36px_rgba(46,21,66,0.12)] hover:-translate-y-1.5 transition-all duration-300 border border-slate-100/80 flex flex-col h-full"
                   >
-                    <div className="w-full sm:w-2/5 aspect-[4/3] rounded-2xl overflow-hidden shrink-0 relative">
+                    {/* Imagem do Card */}
+                    <div className="w-full h-[220px] overflow-hidden bg-slate-100 shrink-0 relative">
                       <img
-                        src={item.imageUrl}
+                        src={imagem}
                         alt={item.title}
+                        referrerPolicy="no-referrer"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                    </div>
-                    <div className="flex flex-col justify-center py-2 sm:pr-4 flex-1">
-                      <p className="text-[#ff3e5e] text-[11px] font-black uppercase tracking-wider mb-2">
+                      {/* Badge de Data */}
+                      <span className="absolute top-4 right-4 bg-slate-900/75 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider backdrop-blur-md">
                         {new Date(item.pubDate).toLocaleDateString("pt-BR")}
-                      </p>
-                      <h3 className="text-lg lg:text-xl font-bold text-[#5c3e7b] mb-3 group-hover:text-[#ff3e5e] transition-colors leading-tight line-clamp-3">
-                        {item.title}
-                      </h3>
-                      <p
-                        className="text-slate-500 text-sm line-clamp-2 font-medium"
-                        dangerouslySetInnerHTML={{ __html: item.description }}
-                      ></p>
+                      </span>
                     </div>
-                  </a>
-                ))}
-              </div>
+
+                    {/* Conteúdo do Card */}
+                    <div className="p-[15px] flex-1 flex flex-col justify-between">
+                      <div>
+                        {/* Título adaptado com cores do site */}
+                        <h2 className="text-xl font-bold text-[#5c3e7b] mb-2 group-hover:text-[#ff3e5e] transition-colors leading-snug line-clamp-2">
+                          {item.title}
+                        </h2>
+                        {/* Descrição limpa */}
+                        <p className="text-[#555] text-sm leading-[1.5] mb-4 line-clamp-3">
+                          {cleanDesc}
+                        </p>
+                      </div>
+
+                      {/* Botão de Link com cores do site adaptadas */}
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block bg-[#ff3e5e] hover:bg-[#5c3e7b] text-white px-[15px] py-[10px] text-sm font-bold text-center rounded-[5px] transition-all duration-300 self-start mt-[15px]"
+                      >
+                        Ler Notícia
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : null}
         </section>
@@ -1106,30 +1100,42 @@ export default function App() {
               </p>
 
               <div className="flex flex-col items-center md:items-start pt-4 mt-4 border-t border-white/15 w-full">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#fce315]/90 mb-2">
-                  Parceiro Oficial
-                </span>
-                <a
-                  href="https://www.vitrinedosul.com.br"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2.5 px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 group/partner shadow-sm"
-                >
-                  <img
-                    src="https://www.vitrinedosul.com.br/img/f23f14e98b1633ae33c6df8188840cb21436602a.png"
-                    alt="Portal Vitrine do Sul"
-                    className="h-8 w-auto object-contain transition-transform duration-300 group-hover/partner:scale-105"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="flex flex-col text-left">
-                    <span className="text-[10px] font-extrabold text-slate-200 group-hover/partner:text-[#fce315] transition-colors leading-none">
-                      Vitrine do Sul
-                    </span>
-                    <span className="text-[8px] font-bold text-white/50 tracking-wider mt-1 uppercase">
-                      Acessar Notícias
-                    </span>
+                <div className="flex flex-col items-center md:items-start w-full">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#fce315]/90 mb-2">
+                    Parceiros & Oportunidades
+                  </span>
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                    <a
+                      href="https://www.vitrinedosul.com.br"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2.5 px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 group/partner shadow-sm"
+                    >
+                      <img
+                        src="https://www.vitrinedosul.com.br/img/f23f14e98b1633ae33c6df8188840cb21436602a.png"
+                        alt="Portal Vitrine do Sul"
+                        className="h-8 w-auto object-contain transition-transform duration-300 group-hover/partner:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="flex flex-col text-left">
+                        <span className="text-[10px] font-extrabold text-slate-200 group-hover/partner:text-[#fce315] transition-colors leading-none">
+                          Vitrine do Sul
+                        </span>
+                        <span className="text-[8px] font-bold text-white/50 tracking-wider mt-1 uppercase">
+                          Ver Notícias
+                        </span>
+                      </div>
+                    </a>
+
+                    <button
+                      onClick={() => setShowAnunciarModal(true)}
+                      className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-[#ff3e5e] to-[#ff3864] hover:from-rose-500 hover:to-rose-600 border border-transparent rounded-xl transition-all duration-300 shadow-md text-[11px] font-[900] text-white uppercase tracking-wider hover:scale-103 cursor-pointer"
+                    >
+                      <Megaphone className="w-3.5 h-3.5" />
+                      Como Anunciar
+                    </button>
                   </div>
-                </a>
+                </div>
               </div>
             </div>
           </div>
@@ -1183,10 +1189,18 @@ export default function App() {
         {/* Copyright Bar */}
         <div className="max-w-6xl mx-auto px-6 mt-12 relative z-10">
           <div className="border-t border-white/20 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-white/70">
-            <p className="font-semibold text-white/90">
-              © {new Date().getFullYear()} Rádio Clube FM. Todos os direitos
-              reservados.
-            </p>
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 text-center sm:text-left mb-4 sm:mb-0">
+              <p className="font-semibold text-white/90">
+                © {new Date().getFullYear()} Rádio Clube FM. Todos os direitos
+                reservados.
+              </p>
+              <button
+                onClick={() => setShowAnunciarModal(true)}
+                className="text-[#fce315] hover:text-[#ffe83b] hover:underline font-extrabold uppercase tracking-wider text-[11px] transition-colors cursor-pointer"
+              >
+                Como Anunciar na Rádio
+              </button>
+            </div>
             <p className="mt-4 sm:mt-0 font-medium flex items-center justify-center sm:justify-start gap-1">
               Desenvolvido com{" "}
               <Heart className="w-3.5 h-3.5 fill-[#ff3e5e] text-[#ff3e5e]" />{" "}
@@ -1203,6 +1217,188 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+
+      {/* Modal Como Anunciar */}
+      {showAnunciarModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+          {/* Modal Container */}
+          <div className="relative bg-white text-slate-800 rounded-[2.5rem] w-full max-w-4xl shadow-2xl border border-slate-100 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-300">
+            {/* Fancy top colorful bar */}
+            <div className="h-2 bg-gradient-to-r from-[#5c337c] via-[#ff3e5e] to-[#fce315]"></div>
+            
+            {/* Modal Header */}
+            <div className="p-6 sm:p-10 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white flex justify-between items-start">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-[#ff3e5e]/10 text-[#ff3e5e] rounded-2xl flex items-center justify-center shrink-0">
+                  <Megaphone className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-[#5c337c]/10 text-[#5c337c] text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider">
+                      Oportunidade Comercial
+                    </span>
+                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-[#5c3e7b] tracking-tight mt-1 leading-none">
+                    Como Anunciar na Clube FM
+                  </h2>
+                  <p className="text-xs sm:text-xs text-slate-500 font-medium mt-1 uppercase tracking-wider">
+                    Divulgue sua marca na rádio número um de Criciúma
+                  </p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setShowAnunciarModal(false)}
+                className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all duration-300 cursor-pointer shadow-sm border border-slate-200"
+                title="Fechar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 sm:p-10 overflow-y-auto max-h-[60vh] space-y-8">
+              {/* Main Banner pitch */}
+              <div className="bg-gradient-to-br from-[#5c337c]/5 via-white to-[#ff3e5e]/5 p-6 rounded-3xl border border-slate-100/80 relative overflow-hidden">
+                <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 w-48 h-48 bg-[#fce315]/10 rounded-full blur-3xl pointer-events-none"></div>
+                <h3 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight mb-2 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#ff3e5e]" />
+                  Acelere os Resultados da Sua Empresa
+                </h3>
+                <p className="text-slate-600 text-sm leading-relaxed font-medium">
+                  Anunciar na <strong>Clube FM Criciúma</strong> é ter a certeza de que a sua marca estará presente no dia a dia da região carbonífera. Através do rádio convencional, aplicativo oficial, e redes integradas, alcançamos milhares de clientes em potencial todos os dias, com alta retenção e retorno garantido.
+                </p>
+              </div>
+
+              {/* Grid section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Column 1 */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Target className="w-4 h-4 text-[#ff3e5e]" />
+                    Vantagens da Nossa Rádio
+                  </h4>
+                  <ul className="space-y-3.5">
+                    <li className="flex gap-3 text-slate-600 text-sm leading-relaxed">
+                      <div className="w-5 h-5 rounded-full bg-[#ff3e5e]/10 text-[#ff3e5e] flex items-center justify-center shrink-0 mt-0.5">
+                        <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                      </div>
+                      <div>
+                        <strong className="text-slate-800">Audiência Altamente Fiel:</strong> Ouvintes apaixonados que confiam nas recomendações dos nossos comunicadores.
+                      </div>
+                    </li>
+                    <li className="flex gap-3 text-slate-600 text-sm leading-relaxed">
+                      <div className="w-5 h-5 rounded-full bg-[#ff3e5e]/10 text-[#ff3e5e] flex items-center justify-center shrink-0 mt-0.5">
+                        <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                      </div>
+                      <div>
+                        <strong className="text-slate-800">Localização Estratégica:</strong> Presentes no coração do sul catarinense, cobrindo Criciúma e cidades vizinhas.
+                      </div>
+                    </li>
+                    <li className="flex gap-3 text-slate-600 text-sm leading-relaxed">
+                      <div className="w-5 h-5 rounded-full bg-[#ff3e5e]/10 text-[#ff3e5e] flex items-center justify-center shrink-0 mt-0.5">
+                        <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                      </div>
+                      <div>
+                        <strong className="text-slate-800">Presença Multiplataforma:</strong> Sua marca no rádio FM regional, app oficial e mídias sociais.
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Column 2 */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-[#5c337c]" />
+                    Formatos de Anúncio
+                  </h4>
+                  <ul className="space-y-3.5">
+                    <li className="flex gap-3 text-slate-600 text-sm leading-relaxed">
+                      <div className="w-5 h-5 rounded-full bg-[#5c337c]/10 text-[#5c337c] flex items-center justify-center shrink-0 mt-0.5">
+                        <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                      </div>
+                      <div>
+                        <strong className="text-slate-800">Spots Comerciais (30" e 15"):</strong> Inserções profissionais distribuídas estrategicamente na programação.
+                      </div>
+                    </li>
+                    <li className="flex gap-3 text-slate-600 text-sm leading-relaxed">
+                      <div className="w-5 h-5 rounded-full bg-[#5c337c]/10 text-[#5c337c] flex items-center justify-center shrink-0 mt-0.5">
+                        <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                      </div>
+                      <div>
+                        <strong className="text-slate-800">Patrocínio Promocional:</strong> Sua marca associada aos prêmios mais desejados de Criciúma.
+                      </div>
+                    </li>
+                    <li className="flex gap-3 text-slate-600 text-sm leading-relaxed">
+                      <div className="w-5 h-5 rounded-full bg-[#5c337c]/10 text-[#5c337c] flex items-center justify-center shrink-0 mt-0.5">
+                        <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                      </div>
+                      <div>
+                        <strong className="text-slate-800">Merchandising & Flashes:</strong> Divulgações ao vivo e ações sob medida para datas sazonais.
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Action Commercial WhatsApp Contact CTA Area */}
+              <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="space-y-1 text-center md:text-left">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-600 text-xs font-black rounded-full uppercase tracking-wider">
+                    Fale Direto com o Consultor
+                  </span>
+                  <h4 className="text-lg font-black text-slate-800 mt-1">
+                    Gostaria de Receber Planos Comerciais?
+                  </h4>
+                  <p className="text-slate-500 text-xs font-medium max-w-sm md:max-w-md">
+                    Clique no botão para falar conosco no WhatsApp. Criamos pacotes ideais para o tamanho da sua empresa.
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-center md:items-end gap-2.5 w-full md:w-auto">
+                  <a
+                    href="https://wa.me/5548996867091?text=Olá!%20Gostaria%20de%20anunciar%20minha%20empresa%20na%20Clube%20FM%20Criciúma.%20Poderia%20me%20enviar%20os%20planos%20comerciais%20e%20formatos%20disponíveis?"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 w-full sm:w-auto px-6 py-4 bg-[#25D366] hover:bg-[#128C7E] text-white font-black text-sm uppercase tracking-wider rounded-2xl transition-all duration-300 shadow-lg hover:shadow-emerald-500/20 hover:scale-103 cursor-pointer"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="white"
+                      className="w-5 h-5 shrink-0"
+                    >
+                      <path d="M12.031 0A12 12 0 0 0 0 12c0 2.115.553 4.108 1.542 5.867L.18 23.518l5.807-1.514A11.972 11.972 0 0 0 12.031 24c6.627 0 12-5.373 12-12s-5.373-12-12-12zm6.657 17.15c-.279.79-1.343 1.517-2.072 1.637-.73.12-1.748.337-5.597-1.258-4.63-1.92-7.653-6.666-7.882-6.974-.23-.307-1.884-2.508-1.884-4.786s1.173-3.398 1.583-3.834c.41-.437.892-.547 1.19-.547.297 0 .596.012.86.026.275.014.646-.107.994.733.364.876 1.19 2.909 1.295 3.126.107.218.18.472.046.732-.132.261-.202.424-.4.636-.2.21-.418.468-.598.648-.198.196-.407.411-.18 2.015.632 1.748 1.83 2.998 3.018 3.996C14.07 15.358 14.887 15.228 15.118 14.935c.23-.294 1.01-1.178 1.288-1.582.277-.405.553-.338.92-.203.367.135 2.327 1.096 2.723 1.294.397.198.66.297.755.462.097.165.097.962-.182 1.75z" />
+                    </svg>
+                    <span>Falar no WhatsApp</span>
+                  </a>
+                  <span className="text-[13px] font-extrabold text-slate-700 tracking-wide flex items-center gap-1.5 justify-center">
+                    <Phone className="w-3.5 h-3.5 text-emerald-500 fill-current shrink-0" />
+                    +55 48 99686-7091
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer with quick contacts */}
+            <div className="bg-gradient-to-b from-white to-slate-50 p-6 sm:px-10 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-slate-500">
+              <span className="flex items-center gap-1">
+                <Mail className="w-3.5 h-3.5 text-[#ff3e5e]" />
+                comercial@innovetecnologia.com.br
+              </span>
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-[#5c337c]" />
+                Rua Vendramino Dajori, 85 - Criciúma, SC
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hidden Audio Element */}
       <audio
