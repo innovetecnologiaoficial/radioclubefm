@@ -346,16 +346,52 @@ export default function App() {
   useEffect(() => {
     fetch("/api/news")
       .then((res) => {
-        if (!res.ok) throw new Error("Falha ao carregar notícias");
+        if (!res.ok) throw new Error("Falha ao carregar notícias do servidor");
         return res.json();
       })
       .then((data) => {
+        if (!data || data.length === 0) {
+          throw new Error("Nenhum dado de notícias retornado do servidor");
+        }
         setNews(data);
+        setError(null);
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
+        console.warn("Server news proxy failed, trying direct external rss2json API...", err);
+        fetch("https://api.rss2json.com/v1/api.json?rss_url=https://www.vitrinedosul.com.br/rss.xml")
+          .then((res) => {
+            if (!res.ok) throw new Error("Erro na requisição ao RSS externo");
+            return res.json();
+          })
+          .then((data) => {
+            if (!data || !data.items || !Array.isArray(data.items)) {
+              throw new Error("Formato inválido do feed externo");
+            }
+            const mapped = data.items.slice(0, 9).map((item: any) => {
+              let imagem = item.thumbnail;
+              if (!imagem || imagem === "") {
+                const textToSearch = (item.description || "") + (item.content || "");
+                const match = textToSearch.match(/<img[^>]+src="([^"]+)"/);
+                imagem = match ? match[1] : "";
+              }
+              return {
+                title: item.title,
+                link: item.link,
+                pubDate: item.pubDate || new Date().toISOString(),
+                description: item.description || "",
+                imageUrl: imagem,
+              };
+            });
+            setNews(mapped);
+            setError(null);
+            setLoading(false);
+          })
+          .catch((externalErr) => {
+            console.error("Ambas as fontes de notícias falharam:", externalErr);
+            setError("Não conseguimos carregar as notícias no momento. Tente novamente mais tarde.");
+            setLoading(false);
+          });
       });
 
     fetchWeather();
