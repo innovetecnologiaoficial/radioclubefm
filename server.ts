@@ -30,35 +30,37 @@ app.get('/api/news', async (req, res) => {
     // Attempt to fetch from typical wordpress feed URLs
     const feed = await parser.parseURL('https://www.vitrinedosul.com.br/rss.xml');
     const items = feed.items.slice(0, 9).map(item => {
-      // try to extract image from content or media
+      // try to extract image from various possible tags and formats
       let imageUrl = null;
-      const imgRegex = /<img[^>]+src="([^">]+)"/g;
       
-      // Check media:content
+      // 1. Check media:content (nested in '$' property)
       if (item['media:content'] && item['media:content']['$'] && item['media:content']['$'].url) {
         imageUrl = item['media:content']['$'].url;
       }
       
-      if (!imageUrl && item['content:encoded']) {
-        const match = imgRegex.exec(item['content:encoded']);
-        if (match && match[1]) imageUrl = match[1];
+      // 2. Check enclosure url or link
+      if (!imageUrl && item.enclosure) {
+        const enc = item.enclosure as any;
+        if (enc.url) imageUrl = enc.url;
+        else if (enc.link) imageUrl = enc.link;
       }
       
-      if (!imageUrl && item.content) {
-        const match = imgRegex.exec(item.content);
-        if (match && match[1]) imageUrl = match[1];
-      }
-      
-      if (!imageUrl && item.description) {
-        const match = imgRegex.exec(item.description);
-        if (match && match[1]) imageUrl = match[1];
-      }
+      // 3. Extract img src safely without /g flag to avoid RegExp state issues
+      const extractImgSrc = (htmlText?: string) => {
+        if (!htmlText) return null;
+        const match = htmlText.match(/<img[^>]+src=["']([^"']+)["']/i);
+        return match ? match[1] : null;
+      };
+
+      if (!imageUrl) imageUrl = extractImgSrc(item['content:encoded']);
+      if (!imageUrl) imageUrl = extractImgSrc(item.content);
+      if (!imageUrl) imageUrl = extractImgSrc(item.description);
 
       return {
         title: item.title,
         link: item.link,
         pubDate: item.pubDate,
-        description: item.contentSnippet || item.description,
+        description: item.contentSnippet || item.description || "",
         imageUrl: imageUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80',
       };
     });
@@ -69,6 +71,22 @@ app.get('/api/news', async (req, res) => {
   } catch (error) {
     console.error('Error fetching RSS:', error);
     res.status(500).json({ error: 'Failed to fetch news' });
+  }
+});
+
+app.get('/api/weather', async (req, res) => {
+  try {
+    const response = await fetch(
+      "https://api.open-meteo.com/v1/forecast?latitude=-28.6775&longitude=-49.3697&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&timezone=America/Sao_Paulo"
+    );
+    if (!response.ok) {
+      throw new Error(`Open-Meteo responded with status ${response.status}`);
+    }
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching weather:', error);
+    res.status(500).json({ error: 'Failed to fetch weather data from Open-Meteo' });
   }
 });
 

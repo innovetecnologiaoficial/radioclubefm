@@ -191,9 +191,16 @@ export default function App() {
   const fetchWeather = async () => {
     try {
       setIsRefreshingWeather(true);
-      const res = await fetch(
-        "https://api.open-meteo.com/v1/forecast?latitude=-28.6775&longitude=-49.3697&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&timezone=America/Sao_Paulo",
-      );
+      let res;
+      try {
+        res = await fetch("/api/weather");
+        if (!res.ok) throw new Error("Weather API proxy error");
+      } catch (proxyError) {
+        console.warn("Weather proxy failed, fetching direct from Open-Meteo...", proxyError);
+        res = await fetch(
+          "https://api.open-meteo.com/v1/forecast?latitude=-28.6775&longitude=-49.3697&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&timezone=America/Sao_Paulo",
+        );
+      }
       if (!res.ok) throw new Error("Erro ao buscar clima");
       const data = await res.json();
 
@@ -370,11 +377,30 @@ export default function App() {
             }
             const mapped = data.items.slice(0, 9).map((item: any) => {
               let imagem = item.thumbnail;
+              
+              // Check enclosure format (sometimes a string, sometimes an object with url or link)
+              if (!imagem && item.enclosure) {
+                if (typeof item.enclosure === "string") {
+                  imagem = item.enclosure;
+                } else if (item.enclosure.link) {
+                  imagem = item.enclosure.link;
+                } else if (item.enclosure.url) {
+                  imagem = item.enclosure.url;
+                }
+              }
+
+              // Check media:content just in case
+              if (!imagem && item['media:content'] && item['media:content']['$'] && item['media:content']['$'].url) {
+                imagem = item['media:content']['$'].url;
+              }
+
+              // Fallback to checking description or content for standard img tags
               if (!imagem || imagem === "") {
                 const textToSearch = (item.description || "") + (item.content || "");
-                const match = textToSearch.match(/<img[^>]+src="([^"]+)"/);
+                const match = textToSearch.match(/<img[^>]+src=["']([^"']+)["']/i);
                 imagem = match ? match[1] : "";
               }
+
               return {
                 title: item.title,
                 link: item.link,
