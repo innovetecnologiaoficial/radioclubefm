@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import HighlightsSlider from "./components/HighlightsSlider";
 import {
   Play,
   Pause,
@@ -509,18 +510,10 @@ export default function App() {
 
          {/* Top 4 Mais Tocadas */}
         <section id="hits" className="max-w-7xl mx-auto px-4 py-8 mb-8">
-          <div className="flex items-center justify-between mb-8">
+          <div className="mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-800">
               Top Hits da Rádio Clube FM Criciúma
             </h2>
-            <div className="flex space-x-2">
-              <button className="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center text-slate-400 hover:text-[#ff3e5e] hover:border-[#ff3e5e] transition-colors">
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <button className="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center text-slate-800 hover:text-[#ff3e5e] hover:border-[#ff3e5e] transition-colors">
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -553,27 +546,8 @@ export default function App() {
           </div>
         </section>
 
-        {/* Eventos e Destaques - Imagens de Card */}
-        <section id="cards-destaque" className="max-w-7xl mx-auto px-4 py-4 mb-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="overflow-hidden rounded-[2rem] border border-slate-100/80 shadow-[0_12px_40px_rgba(0,0,0,0.04)] bg-white group hover:shadow-[0_24px_60px_rgba(0,0,0,0.08)] hover:-translate-y-1.5 transition-all duration-300">
-              <img
-                src="https://radioclubecriciuma.com/imagens/CARD1.png"
-                alt="Destaque Clube FM 1"
-                referrerPolicy="no-referrer"
-                className="w-full h-auto object-cover select-none rounded-[2rem]"
-              />
-            </div>
-            <div className="overflow-hidden rounded-[2rem] border border-slate-100/80 shadow-[0_12px_40px_rgba(0,0,0,0.04)] bg-white group hover:shadow-[0_24px_60px_rgba(0,0,0,0.08)] hover:-translate-y-1.5 transition-all duration-300">
-              <img
-                src="https://radioclubecriciuma.com/imagens/CARD2.png"
-                alt="Destaque Clube FM 2"
-                referrerPolicy="no-referrer"
-                className="w-full h-auto object-cover select-none rounded-[2rem]"
-              />
-            </div>
-          </div>
-        </section>
+        {/* Eventos, Prêmios e Programação - Carrossel de Cards */}
+        <HighlightsSlider />
 
         {/* App Download Section */}
         <section
