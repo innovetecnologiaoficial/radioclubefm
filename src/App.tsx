@@ -57,24 +57,28 @@ const topSongs = [
     title: 'Gusttavo Lima - Retrovisor | DVD "Feito à Mão"',
     image:
       "https://gusttavolima.com.br/wp-content/uploads/2026/02/feitoamao-vol-1.png",
+    link: "https://www.youtube.com/watch?v=T67WZx7CxY8",
   },
   {
     id: "02",
     title: "Luan Santana - OLHO MARROM (Ao Vivo em Lisboa)",
     image:
       "https://akamai.sscdn.co/uploadfile/letras/fotos/6/e/4/9/6e491e984b0c1185f4f80ba2102533eb.jpg",
+    link: "https://www.youtube.com/watch?v=4w5pMlz8qK0",
   },
   {
     id: "03",
     title: "Henrique e Juliano - SEJA EX (Manifesto Musical 2)",
     image:
       "https://s2-oglobo.glbimg.com/J_2hss6ZHpV869-cOaAeEylQoDg=/0x0:1280x702/888x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_da025474c0c44edd99332dddb09cabe8/internal_photos/bs/2022/d/O/3FoGXxQ9KIqLFuc53XZg/99200009-sx-rio-de-janeiro-rj-20-05-2022-henrique-e-juliano-foto-flaney-universal-music-di.jpg",
+    link: "https://www.youtube.com/watch?v=-ovQ3j_LG_c",
   },
   {
     id: "04",
     title: "Grupo Menos É Mais, Simone Mendes - P do Pecado (Ao Vivo...",
     image:
       "https://akamai.sscdn.co/uploadfile/letras/fotos/1/c/d/9/1cd919356bf090366e52f2a0690718a4.jpg",
+    link: "https://www.youtube.com/watch?v=iYjz1Ap1VvU",
   },
 ];
 
@@ -119,6 +123,12 @@ export default function App() {
   const [clubePhone, setClubePhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAnunciarModal, setShowAnunciarModal] = useState(false);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+
+  const getYoutubeId = (url: string) => {
+    const match = url.match(/[?&]v=([^&]+)/);
+    return match ? match[1] : null;
+  };
 
 
 
@@ -518,7 +528,17 @@ export default function App() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {topSongs.map((song) => (
-              <div key={song.id} className="group cursor-pointer">
+              <div 
+                onClick={(e) => {
+                  e.preventDefault();
+                  const videoId = getYoutubeId(song.link);
+                  if (videoId) {
+                    setPlayingVideoId(videoId);
+                  }
+                }}
+                key={song.id} 
+                className="group cursor-pointer block"
+              >
                 <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-slate-200 mb-4 relative">
                   <img
                     src={song.image}
@@ -536,7 +556,7 @@ export default function App() {
                     {song.id}
                   </span>
                   <div>
-                    <h3 className="text-slate-600 font-medium text-sm md:text-base leading-snug pt-1">
+                    <h3 className="text-slate-600 font-medium text-sm md:text-base leading-snug pt-1 group-hover:text-[#ff3e5e] transition-colors">
                       {song.title}
                     </h3>
                   </div>
@@ -1029,7 +1049,7 @@ export default function App() {
           className="absolute inset-0 z-0 opacity-20 mix-blend-multiply"
           style={{
             backgroundImage:
-              "url('https://img.nsctotal.com.br/wp-content/uploads/2024/06/Criciuma-apresenta-projeto-de-ampliacao-do-Heriberto-Hulse-13.jpg')",
+              "url('https://radioclubecriciuma.com/imagens/estudio.jpeg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
@@ -1432,6 +1452,29 @@ export default function App() {
                 Rua Vendramino Dajori, 85 - Criciúma, SC
               </span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {playingVideoId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl">
+            <button 
+              onClick={() => setPlayingVideoId(null)}
+              className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors"
+              aria-label="Close video"
+            >
+               <X className="w-6 h-6" />
+            </button>
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${playingVideoId}?autoplay=1`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            ></iframe>
           </div>
         </div>
       )}
