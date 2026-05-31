@@ -359,7 +359,7 @@ export default function App() {
   };
 
   // In a real scenario, this would be the actual stream URL!
-  const STREAM_URL = "https://servidor39-5.brlogic.com:8902/live";
+  const STREAM_URL = "https://stream2.svrdedicado.org:7125/stream";
 
   useEffect(() => {
     fetch("/api/news")
