@@ -359,7 +359,7 @@ export default function App() {
   };
 
   // In a real scenario, this would be the actual stream URL!
-  const STREAM_URL = "https://stream2.svrdedicado.org:7125/stream";
+  const STREAM_URL = "https://stream2.svrdedicado.org/8258/stream";
 
   useEffect(() => {
     fetch("/api/news")
@@ -1183,13 +1183,13 @@ export default function App() {
                       </div>
                     </a>
 
-                    <button
-                      onClick={() => setShowAnunciarModal(true)}
+                    <a
+                      href="/anuncie"
                       className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-[#ff3e5e] to-[#ff3864] hover:from-rose-500 hover:to-rose-600 border border-transparent rounded-xl transition-all duration-300 shadow-md text-[11px] font-[900] text-white uppercase tracking-wider hover:scale-103 cursor-pointer"
                     >
                       <Megaphone className="w-3.5 h-3.5" />
                       Como Anunciar
-                    </button>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -1250,12 +1250,12 @@ export default function App() {
                 © {new Date().getFullYear()} Rádio Clube FM. Todos os direitos
                 reservados.
               </p>
-              <button
-                onClick={() => setShowAnunciarModal(true)}
+              <a
+                href="/anuncie"
                 className="text-[#fce315] hover:text-[#ffe83b] hover:underline font-extrabold uppercase tracking-wider text-[11px] transition-colors cursor-pointer"
               >
                 Como Anunciar na Rádio
-              </button>
+              </a>
             </div>
             <p className="mt-4 sm:mt-0 font-medium flex items-center justify-center sm:justify-start gap-1">
               Desenvolvido com{" "}
