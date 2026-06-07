@@ -76,6 +76,26 @@ export default function AnunciePage() {
         </div>
       </section>
 
+      {/* Numbers Banner / Estatísticas Rápidas */}
+      <section className="bg-[#ff3e5e] text-white py-8 border-y-4 border-[#e62e4d]">
+        <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-center gap-8 md:gap-16 text-center">
+          <div className="flex flex-col items-center">
+            <span className="text-3xl md:text-5xl font-black drop-shadow-md text-[#fce315]">+150 Mil</span>
+            <span className="text-sm md:text-base font-bold uppercase tracking-wider mt-1 opacity-90">Habitantes Alcançados</span>
+          </div>
+          <div className="hidden sm:block w-px bg-white/20"></div>
+          <div className="flex flex-col items-center">
+            <span className="text-3xl md:text-5xl font-black drop-shadow-md text-[#fce315]">24h</span>
+            <span className="text-sm md:text-base font-bold uppercase tracking-wider mt-1 opacity-90">No Ar Todos os Dias</span>
+          </div>
+          <div className="hidden sm:block w-px bg-white/20"></div>
+          <div className="flex flex-col items-center">
+            <span className="text-3xl md:text-5xl font-black drop-shadow-md text-[#fce315]">100%</span>
+            <span className="text-sm md:text-base font-bold uppercase tracking-wider mt-1 opacity-90">Comprometimento</span>
+          </div>
+        </div>
+      </section>
+
       {/* Benefits Section */}
       <section className="py-20 lg:py-28 max-w-7xl mx-auto px-4">
         <div className="text-center mb-16">
@@ -340,33 +360,33 @@ export default function AnunciePage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { time: "15 Segundos", price: "R$ 10", desc: "Perfeito para recados rápidos, flashes ou ofertas do dia." },
-              { time: "30 Segundos", price: "R$ 20", desc: "O padrão comercial. Ideal para fixar o nome e o produto." },
-              { time: "45 Segundos", price: "R$ 30", desc: "Mais tempo para explicações, serviços detalhados." },
-              { time: "60 Segundos", price: "R$ 40", desc: "Spot premium. Destaque total para grandes lançamentos." },
+              { time: "15 Segundos", price: "R$ 10", desc: "Perfeito para recados rápidos, flashes ou ofertas do dia.", popular: false },
+              { time: "30 Segundos", price: "R$ 20", desc: "O padrão comercial. Ideal para fixar o nome e o produto.", popular: true },
+              { time: "45 Segundos", price: "R$ 30", desc: "Mais tempo para explicações, serviços detalhados.", popular: false },
+              { time: "60 Segundos", price: "R$ 40", desc: "Spot premium. Destaque total para grandes lançamentos.", popular: false },
             ].map((plan, i) => (
-              <div key={i} className="bg-slate-50 rounded-3xl p-8 border border-slate-200 relative flex flex-col hover:border-[#ff3e5e]/30 hover:bg-white hover:shadow-2xl transition-all duration-300">
-                {plan.time === "30 Segundos" && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#ff3e5e] text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+              <div key={i} className={`rounded-3xl p-8 border relative flex flex-col transition-all duration-300 ${plan.popular ? 'bg-[#ff3e5e] border-[#ff3e5e] text-white shadow-2xl scale-105 z-10' : 'bg-slate-50 border-slate-200 hover:border-[#5c337c]/30 hover:bg-white hover:shadow-xl text-slate-700'}`}>
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#fce315] text-[#5c337c] px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider drop-shadow-md">
                     Mais Pedido
                   </div>
                 )}
-                <h3 className="text-xl font-bold text-slate-700 mb-2">{plan.time}</h3>
-                <p className="text-slate-500 text-sm mb-6 flex-grow">{plan.desc}</p>
-                <div className="text-4xl font-black text-[#5c337c] mb-6 flex items-end gap-1">
-                  {plan.price} <span className="text-base text-slate-400 font-medium">/ inserção</span>
+                <h3 className={`text-xl font-bold mb-2 ${plan.popular ? 'text-white' : 'text-slate-700'}`}>{plan.time}</h3>
+                <p className={`text-sm mb-6 flex-grow ${plan.popular ? 'text-rose-100' : 'text-slate-500'}`}>{plan.desc}</p>
+                <div className={`text-4xl font-black mb-6 flex items-end gap-1 ${plan.popular ? 'text-white' : 'text-[#5c337c]'}`}>
+                  {plan.price} <span className={`text-base font-medium ${plan.popular ? 'text-rose-200' : 'text-slate-400'}`}>/ inserção</span>
                 </div>
                 <ul className="space-y-3 mb-8">
-                  <li className="flex items-center gap-2 text-slate-600 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-[#00c853]" /> Roteiro otimizado
+                  <li className={`flex items-center gap-2 text-sm ${plan.popular ? 'text-rose-50' : 'text-slate-600'}`}>
+                    <CheckCircle2 className={`w-4 h-4 ${plan.popular ? 'text-[#fce315]' : 'text-[#00c853]'}`} /> Roteiro otimizado
                   </li>
-                  <li className="flex items-center gap-2 text-slate-600 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-[#00c853]" /> Inserção no bloco
+                  <li className={`flex items-center gap-2 text-sm ${plan.popular ? 'text-rose-50' : 'text-slate-600'}`}>
+                    <CheckCircle2 className={`w-4 h-4 ${plan.popular ? 'text-[#fce315]' : 'text-[#00c853]'}`} /> Inserção no bloco
                   </li>
                 </ul>
                 <button
                   onClick={scrollToContact}
-                  className="mt-auto w-full py-3 rounded-xl font-bold text-white bg-[#5c337c] hover:bg-[#3d1a5a] transition-all"
+                  className={`mt-auto w-full py-3 rounded-xl font-bold transition-all ${plan.popular ? 'bg-[#fce315] text-[#5c337c] hover:bg-yellow-400' : 'bg-[#5c337c] text-white hover:bg-[#3d1a5a]'}`}
                 >
                   Quero este formato
                 </button>
@@ -386,10 +406,11 @@ export default function AnunciePage() {
       </section>
 
       {/* CTA / Contact */}
-      <section id="contato" className="py-24 bg-[#ff3e5e] text-center px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://cdn.esbrasil.com.br/wp-content/uploads/2024/10/Zeze-di-Camargo-Foto-Lana-Pinho.png')] bg-cover bg-center opacity-50 mix-blend-overlay"></div>
+      <section id="contato" className="py-24 md:py-32 bg-gray-900 text-center px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://cdn.esbrasil.com.br/wp-content/uploads/2024/10/Zeze-di-Camargo-Foto-Lana-Pinho.png')] bg-cover bg-top opacity-50"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#ff3e5e]/90 to-[#ff3e5e]/60"></div>
         <div className="max-w-4xl mx-auto relative z-10">
-          <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
+          <h2 className="text-3xl md:text-5xl font-black text-white mb-6 drop-shadow-md">
             Pronto para ver sua marca crescer?
           </h2>
           <p className="text-xl text-white/90 mb-10 font-medium">
@@ -413,9 +434,22 @@ export default function AnunciePage() {
       </section>
       
       {/* Footer minimalista */}
-      <footer className="bg-slate-900 py-8 text-center text-slate-400 text-sm">
+      <footer className="bg-slate-900 py-8 text-center text-slate-400 text-sm pb-24 sm:pb-8">
         <p>&copy; 2026 Clube FM 87.9. Departamento Comercial.</p>
       </footer>
+
+      {/* Floating WhatsApp Button */}
+      <a
+        href="https://wa.me/554896867091?text=Ol%C3%A1%! Gostaria de saber mais sobre os planos para anunciar na rádio e no Vitrine do Sul."
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-[0_4px_14px_0_rgba(37,211,102,0.5)] hover:shadow-[0_6px_20px_rgba(37,211,102,0.6)] hover:-translate-y-1 transition-all group flex items-center gap-0 hover:gap-3 overflow-hidden"
+      >
+        <Phone className="w-8 h-8 fill-current" />
+        <span className="max-w-0 overflow-hidden font-bold whitespace-nowrap group-hover:max-w-xs transition-all duration-300 opacity-0 group-hover:opacity-100 hidden sm:block">
+          Fale Conosco
+        </span>
+      </a>
     </div>
   );
 }
