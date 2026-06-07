@@ -574,23 +574,15 @@ export default function App() {
           id="app"
           className="max-w-5xl mx-auto px-4 py-16 md:py-24 mb-12"
         >
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#5c337c] via-[#713172] to-[#ff3e5e] px-8 py-16 md:py-20 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 min-h-[420px]">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#5c337c] via-[#713172] to-[#ff3e5e] px-8 py-16 md:py-20 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 min-h-[420px] group">
+            {/* Background Image Overlay */}
+            <div className="absolute inset-0 bg-[url('https://radioclubecriciuma.com/imagens/estudioclubefm.png')] bg-cover bg-center opacity-15 mix-blend-luminosity transition-transform duration-700 group-hover:scale-105 z-0"></div>
+
             {/* Background Decorations */}
             <div className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-white/10 rounded-full blur-3xl"></div>
             <div className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-[20rem] h-[20rem] bg-[#fce315]/20 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-[25rem] h-[25rem] bg-[#fce315]/10 rounded-full blur-3xl"></div>
 
-            {/* Background Image on Right Side */}
-            <div className="absolute right-0 bottom-0 top-0 w-full md:w-5/12 z-0 pointer-events-none select-none">
-              <div
-                className="w-full h-full bg-contain bg-right-bottom bg-no-repeat opacity-35 md:opacity-85 lg:opacity-100 transition-opacity duration-300"
-                style={{
-                  backgroundImage:
-                    "url('https://i.postimg.cc/52kCLYmR/Chat-GPT-Image-25-de-mai-de-2026-22-27-14.png')",
-                  filter: "drop-shadow(0 15px 30px rgba(0,0,0,0.3))",
-                }}
-              ></div>
-            </div>
 
             {/* Content Left Side */}
             <div className="relative z-10 max-w-xl flex flex-col items-center md:items-start text-center md:text-left w-full md:w-7/12">
