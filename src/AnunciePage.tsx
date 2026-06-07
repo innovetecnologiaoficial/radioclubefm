@@ -320,10 +320,10 @@ export default function AnunciePage() {
               Pacote Cross-Media Exclusivo
             </div>
             <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
-              Sua marca também no Portal <span className="text-blue-400">Vitrine do Sul!</span>
+              Sua marca nos Portais <span className="text-blue-400">Vitrine do Sul</span> e <span className="text-green-400">Cocal do Sul!</span>
             </h2>
             <p className="text-lg text-slate-300 max-w-xl mb-8 leading-relaxed">
-              O portal de notícias mais acessado do sul catarinense com mais de <span className="text-white font-bold">100 MIL acessos diários</span> e <span className="text-white font-bold">4 MILHÕES de acessos mensais</span>. Conecte sua marca no rádio e na internet!
+              Os portais de notícias mais acessados do sul catarinense com mais de <span className="text-white font-bold">100 MIL acessos diários</span> e <span className="text-white font-bold">4 MILHÕES de acessos mensais</span>. Conecte sua marca no rádio e na internet!
             </p>
             <ul className="space-y-4 mb-8">
               <li className="flex items-center gap-3 text-slate-300 font-medium">
@@ -340,8 +340,10 @@ export default function AnunciePage() {
               </li>
             </ul>
           </div>
-          <div className="md:w-1/2 relative w-full h-full min-h-[300px] flex items-center justify-center max-w-lg mx-auto bg-slate-800/50 rounded-[2rem] p-8 border border-slate-700/50 shadow-2xl">
-             <img src="https://www.vitrinedosul.com.br/img/f23f14e98b1633ae33c6df8188840cb21436602a.png" alt="Portal Vitrine do Sul" className="w-full max-w-xs object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
+          <div className="md:w-1/2 relative w-full h-full min-h-[300px] flex flex-col sm:flex-row items-center justify-center max-w-lg mx-auto bg-slate-800/50 rounded-[2rem] p-8 border border-slate-700/50 shadow-2xl gap-8">
+             <img src="https://www.vitrinedosul.com.br/img/f23f14e98b1633ae33c6df8188840cb21436602a.png" alt="Portal Vitrine do Sul" className="w-full max-w-[150px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
+             <div className="hidden sm:block w-px h-1/2 bg-white/10"></div>
+             <img src="https://radioclubecriciuma.com/imagens/logoportalcocal.png" alt="Portal Cocal do Sul" className="w-full max-w-[150px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
           </div>
         </div>
       </section>

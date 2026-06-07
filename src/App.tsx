@@ -1184,6 +1184,28 @@ export default function App() {
                     </a>
 
                     <a
+                      href="https://www.portalcocaldosul.com.br"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2.5 px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 group/partner shadow-sm"
+                    >
+                      <img
+                        src="https://radioclubecriciuma.com/imagens/logoportalcocal.png"
+                        alt="Portal Cocal do Sul"
+                        className="h-8 w-auto object-contain transition-transform duration-300 group-hover/partner:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="flex flex-col text-left">
+                        <span className="text-[10px] font-extrabold text-slate-200 group-hover/partner:text-[#22c55e] transition-colors leading-none">
+                          Cocal do Sul
+                        </span>
+                        <span className="text-[8px] font-bold text-white/50 tracking-wider mt-1 uppercase">
+                          Ver Notícias
+                        </span>
+                      </div>
+                    </a>
+
+                    <a
                       href="/comercial"
                       className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-[#ff3e5e] to-[#ff3864] hover:from-rose-500 hover:to-rose-600 border border-transparent rounded-xl transition-all duration-300 shadow-md text-[11px] font-[900] text-white uppercase tracking-wider hover:scale-103 cursor-pointer"
                     >
