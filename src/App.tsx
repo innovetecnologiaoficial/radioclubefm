@@ -607,7 +607,9 @@ export default function App() {
 
               <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4 w-full sm:w-auto">
                 <a
-                  href="#"
+                  href="https://apps.apple.com/us/app/r%C3%A1dio-clube-crici%C3%BAma/id6777545744"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group relative overflow-hidden flex items-center justify-center space-x-3 px-8 py-4 bg-white hover:bg-gray-50 rounded-2xl transition-all duration-300 w-full sm:w-[210px] shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:-translate-y-1"
                 >
                   <AppleIcon className="w-7 h-7 text-[#1d1d1f] group-hover:scale-110 transition-transform duration-300" />
@@ -622,7 +624,7 @@ export default function App() {
                 </a>
 
                 <a
-                  href="https://play.google.com/store/apps/details?id=net.webappradio.radioclubecriciuma&hl=pt_BR"
+                  href="https://play.google.com/store/apps/details?id=br.com.radioclubecriciuma"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative overflow-hidden flex items-center justify-center space-x-4 px-8 py-4 bg-white hover:bg-gray-50 rounded-2xl transition-all duration-300 w-full sm:w-[210px] shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:-translate-y-1"
