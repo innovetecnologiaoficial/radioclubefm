@@ -124,6 +124,7 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAnunciarModal, setShowAnunciarModal] = useState(false);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [selectedNewsUrl, setSelectedNewsUrl] = useState<string | null>(null);
 
   const getYoutubeId = (url: string) => {
     const match = url.match(/[?&]v=([^&]+)/);
@@ -817,14 +818,15 @@ export default function App() {
                       </div>
 
                       {/* Botão de Link com cores do site adaptadas */}
-                      <a
-                        href={item.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSelectedNewsUrl(item.link);
+                        }}
                         className="inline-block bg-[#ff3e5e] hover:bg-[#5c3e7b] text-white px-[15px] py-[10px] text-sm font-bold text-center rounded-[5px] transition-all duration-300 self-start mt-[15px]"
                       >
                         Ler Notícia
-                      </a>
+                      </button>
                     </div>
                   </div>
                 );
@@ -1266,12 +1268,6 @@ export default function App() {
                 © {new Date().getFullYear()} Rádio Clube FM. Todos os direitos
                 reservados.
               </p>
-              <a
-                href="/comercial"
-                className="text-[#fce315] hover:text-[#ffe83b] hover:underline font-extrabold uppercase tracking-wider text-[11px] transition-colors cursor-pointer"
-              >
-                Departamento Comercial
-              </a>
             </div>
             <p className="mt-4 sm:mt-0 font-medium flex items-center justify-center sm:justify-start gap-1">
               Desenvolvido com{" "}
@@ -1490,6 +1486,29 @@ export default function App() {
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
+            ></iframe>
+          </div>
+        </div>
+      )}
+
+      {selectedNewsUrl && (
+        <div className="fixed inset-0 z-[50] flex flex-col bg-white">
+          <div className="h-14 bg-[#4b2766] flex items-center justify-between px-4 shrink-0 shadow-md relative z-10">
+            <h3 className="text-white font-bold tracking-wide truncate pr-4">Clube FM - Notícias</h3>
+            <button 
+              onClick={() => setSelectedNewsUrl(null)}
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors shrink-0"
+              aria-label="Close news"
+            >
+               <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex-1 w-full bg-slate-50 relative pb-[76px] md:pb-0">
+            <iframe
+              src={selectedNewsUrl}
+              className="w-full h-full border-none"
+              title="Notícia"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
             ></iframe>
           </div>
         </div>

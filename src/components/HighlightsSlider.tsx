@@ -39,6 +39,12 @@ const CARDS: CardItem[] = [
     url: "https://radioclubecriciuma.com/imagens/CARD5.png",
     alt: "Destaque e Novidades",
     title: "Novidades"
+  },
+  {
+    id: 6,
+    url: "https://radioclubecriciuma.com/imagens/CARD6.jpeg",
+    alt: "Destaque 6",
+    title: "Destaque 6"
   }
 ];
 
