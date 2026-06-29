@@ -54,24 +54,24 @@ interface NewsItem {
 const topSongs = [
   {
     id: "01",
-    title: 'Gusttavo Lima - Retrovisor | DVD "Feito à Mão"',
+    title: 'Gusttavo Lima - Bala Alojada',
     image:
       "https://gusttavolima.com.br/wp-content/uploads/2026/02/feitoamao-vol-1.png",
-    link: "https://www.youtube.com/watch?v=T67WZx7CxY8",
+    link: "https://www.youtube.com/watch?v=wjXyMM3-4j0",
   },
   {
     id: "02",
-    title: "Luan Santana - OLHO MARROM (Ao Vivo em Lisboa)",
+    title: "Guilherme & Benuto - Esconde - Esconde",
     image:
-      "https://akamai.sscdn.co/uploadfile/letras/fotos/6/e/4/9/6e491e984b0c1185f4f80ba2102533eb.jpg",
-    link: "https://www.youtube.com/watch?v=4w5pMlz8qK0",
+      "https://s2-g1.glbimg.com/y-kDBpbF9DNlyEP6wj1oREB6r14=/0x0:2000x1405/924x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2020/o/B/8tmlAnTQuguchVHbmkWA/guilherme-e-benuto.jpg",
+    link: "https://www.youtube.com/watch?v=Hue84LFnIPY&list=RDHue84LFnIPY&start_radio=1",
   },
   {
     id: "03",
-    title: "Henrique e Juliano - SEJA EX (Manifesto Musical 2)",
+    title: "Zé Neto & Cristiano - Mente Sã",
     image:
-      "https://s2-oglobo.glbimg.com/J_2hss6ZHpV869-cOaAeEylQoDg=/0x0:1280x702/888x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_da025474c0c44edd99332dddb09cabe8/internal_photos/bs/2022/d/O/3FoGXxQ9KIqLFuc53XZg/99200009-sx-rio-de-janeiro-rj-20-05-2022-henrique-e-juliano-foto-flaney-universal-music-di.jpg",
-    link: "https://www.youtube.com/watch?v=-ovQ3j_LG_c",
+      "https://showsertanejo.com.br/wp-content/uploads/2022/08/4-2.jpg",
+    link: "https://www.youtube.com/watch?v=NDWE8YbbWnA",
   },
   {
     id: "04",
@@ -203,16 +203,9 @@ export default function App() {
   const fetchWeather = async () => {
     try {
       setIsRefreshingWeather(true);
-      let res;
-      try {
-        res = await fetch("/api/weather");
-        if (!res.ok) throw new Error("Weather API proxy error");
-      } catch (proxyError) {
-        console.warn("Weather proxy failed, fetching direct from Open-Meteo...", proxyError);
-        res = await fetch(
-          "https://api.open-meteo.com/v1/forecast?latitude=-28.6775&longitude=-49.3697&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&timezone=America/Sao_Paulo",
-        );
-      }
+      const res = await fetch(
+        "https://api.open-meteo.com/v1/forecast?latitude=-28.6775&longitude=-49.3697&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&timezone=America/Sao_Paulo"
+      );
       if (!res.ok) throw new Error("Erro ao buscar clima");
       const data = await res.json();
 
@@ -231,7 +224,7 @@ export default function App() {
       });
       setWeatherError(false);
     } catch (e) {
-      console.error("Open-Meteo failed, using fallback:", e);
+      console.warn("Open-Meteo failed:", e);
       setWeatherError(true);
       if (!weather) {
         setWeather({
@@ -363,73 +356,57 @@ export default function App() {
   const STREAM_URL = "https://stream2.svrdedicado.org/8258/stream";
 
   useEffect(() => {
-    fetch("/api/news")
+    fetch("https://api.rss2json.com/v1/api.json?rss_url=https://www.vitrinedosul.com.br/rss.xml")
       .then((res) => {
-        if (!res.ok) throw new Error("Falha ao carregar notícias do servidor");
+        if (!res.ok) throw new Error("Erro na requisição ao RSS externo");
         return res.json();
       })
       .then((data) => {
-        if (!data || data.length === 0) {
-          throw new Error("Nenhum dado de notícias retornado do servidor");
+        if (!data || !data.items || !Array.isArray(data.items)) {
+          throw new Error("Formato inválido do feed externo");
         }
-        setNews(data);
+        const mapped = data.items.slice(0, 9).map((item: any) => {
+          let imagem = item.thumbnail;
+          
+          // Check enclosure format (sometimes a string, sometimes an object with url or link)
+          if (!imagem && item.enclosure) {
+            if (typeof item.enclosure === "string") {
+              imagem = item.enclosure;
+            } else if (item.enclosure.link) {
+              imagem = item.enclosure.link;
+            } else if (item.enclosure.url) {
+              imagem = item.enclosure.url;
+            }
+          }
+
+          // Check media:content just in case
+          if (!imagem && item['media:content'] && item['media:content']['$'] && item['media:content']['$'].url) {
+            imagem = item['media:content']['$'].url;
+          }
+
+          // Fallback to checking description or content for standard img tags
+          if (!imagem || imagem === "") {
+            const textToSearch = (item.description || "") + (item.content || "");
+            const match = textToSearch.match(/<img[^>]+src=["']([^"']+)["']/i);
+            imagem = match ? match[1] : "";
+          }
+
+          return {
+            title: item.title,
+            link: item.link,
+            pubDate: item.pubDate || new Date().toISOString(),
+            description: item.description || "",
+            imageUrl: imagem,
+          };
+        });
+        setNews(mapped);
         setError(null);
         setLoading(false);
       })
-      .catch((err) => {
-        console.warn("Server news proxy failed, trying direct external rss2json API...", err);
-        fetch("https://api.rss2json.com/v1/api.json?rss_url=https://www.vitrinedosul.com.br/rss.xml")
-          .then((res) => {
-            if (!res.ok) throw new Error("Erro na requisição ao RSS externo");
-            return res.json();
-          })
-          .then((data) => {
-            if (!data || !data.items || !Array.isArray(data.items)) {
-              throw new Error("Formato inválido do feed externo");
-            }
-            const mapped = data.items.slice(0, 9).map((item: any) => {
-              let imagem = item.thumbnail;
-              
-              // Check enclosure format (sometimes a string, sometimes an object with url or link)
-              if (!imagem && item.enclosure) {
-                if (typeof item.enclosure === "string") {
-                  imagem = item.enclosure;
-                } else if (item.enclosure.link) {
-                  imagem = item.enclosure.link;
-                } else if (item.enclosure.url) {
-                  imagem = item.enclosure.url;
-                }
-              }
-
-              // Check media:content just in case
-              if (!imagem && item['media:content'] && item['media:content']['$'] && item['media:content']['$'].url) {
-                imagem = item['media:content']['$'].url;
-              }
-
-              // Fallback to checking description or content for standard img tags
-              if (!imagem || imagem === "") {
-                const textToSearch = (item.description || "") + (item.content || "");
-                const match = textToSearch.match(/<img[^>]+src=["']([^"']+)["']/i);
-                imagem = match ? match[1] : "";
-              }
-
-              return {
-                title: item.title,
-                link: item.link,
-                pubDate: item.pubDate || new Date().toISOString(),
-                description: item.description || "",
-                imageUrl: imagem,
-              };
-            });
-            setNews(mapped);
-            setError(null);
-            setLoading(false);
-          })
-          .catch((externalErr) => {
-            console.error("Ambas as fontes de notícias falharam:", externalErr);
-            setError("Não conseguimos carregar as notícias no momento. Tente novamente mais tarde.");
-            setLoading(false);
-          });
+      .catch((externalErr) => {
+        console.warn("Fonte de notícias falhou:", externalErr.message);
+        setError("Não conseguimos carregar as notícias no momento. Tente novamente mais tarde.");
+        setLoading(false);
       });
 
     fetchWeather();
@@ -467,7 +444,7 @@ export default function App() {
           {/* YouTube Video Background */}
           <div className="absolute inset-0 w-full h-full pointer-events-none bg-[#663b86] z-0 overflow-hidden">
             <iframe
-              src="https://www.youtube.com/embed/3KkCoYA40Ck?autoplay=1&mute=1&loop=1&controls=0&disablekb=1&playsinline=1&playlist=3KkCoYA40Ck&start=90&modestbranding=1&rel=0&iv_load_policy=3"
+              src="https://www.youtube.com/embed/Cqgw36m2b60?autoplay=1&mute=1&loop=1&controls=0&disablekb=1&playsinline=1&playlist=Cqgw36m2b60&start=90&modestbranding=1&rel=0&iv_load_policy=3"
               className="absolute top-1/2 left-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] transform -translate-x-1/2 -translate-y-1/2 scale-[1.3] md:scale-[1.5] opacity-50 mix-blend-overlay"
               allow="autoplay; encrypted-media"
             ></iframe>
@@ -1248,7 +1225,7 @@ export default function App() {
                   <Instagram className="w-5 h-5" />
                 </a>
                 <a
-                  href="https://www.youtube.com/@radioclubecriciumafm"
+                  href="https://www.youtube.com/@radioclubefmcriciuma/streams"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm text-white flex items-center justify-center hover:bg-[#FF0000] hover:-translate-y-1 transition-all duration-300 shadow-md border border-white/20 hover:border-transparent"
