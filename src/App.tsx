@@ -1156,27 +1156,7 @@ export default function App() {
                       </div>
                     </a>
 
-                    <a
-                      href="https://www.portalcocaldosul.com.br"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2.5 px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 group/partner shadow-sm"
-                    >
-                      <img
-                        src="https://radioclubecriciuma.com/imagens/logoportalcocal.png"
-                        alt="Portal Cocal do Sul"
-                        className="h-8 w-auto object-contain transition-transform duration-300 group-hover/partner:scale-105"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="flex flex-col text-left">
-                        <span className="text-[10px] font-extrabold text-slate-200 group-hover/partner:text-[#22c55e] transition-colors leading-none">
-                          Cocal do Sul
-                        </span>
-                        <span className="text-[8px] font-bold text-white/50 tracking-wider mt-1 uppercase">
-                          Ver Notícias
-                        </span>
-                      </div>
-                    </a>
+
 
                     <a
                       href="/comercial"
@@ -1407,7 +1387,7 @@ export default function App() {
 
                 <div className="flex flex-col items-center md:items-end gap-2.5 w-full md:w-auto">
                   <a
-                    href="https://wa.me/5548996867091?text=Olá!%20Gostaria%20de%20anunciar%20minha%20empresa%20na%20Clube%20FM%20Criciúma.%20Poderia%20me%20enviar%20os%20planos%20comerciais%20e%20formatos%20disponíveis?"
+                    href="https://wa.me/5548991423040?text=Olá!%20Gostaria%20de%20anunciar%20minha%20empresa%20na%20Clube%20FM%20Criciúma.%20Poderia%20me%20enviar%20os%20planos%20comerciais%20e%20formatos%20disponíveis?"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-3 w-full sm:w-auto px-6 py-4 bg-[#25D366] hover:bg-[#128C7E] text-white font-black text-sm uppercase tracking-wider rounded-2xl transition-all duration-300 shadow-lg hover:shadow-emerald-500/20 hover:scale-103 cursor-pointer"
@@ -1424,7 +1404,7 @@ export default function App() {
                   </a>
                   <span className="text-[13px] font-extrabold text-slate-700 tracking-wide flex items-center gap-1.5 justify-center">
                     <Phone className="w-3.5 h-3.5 text-emerald-500 fill-current shrink-0" />
-                    +55 48 99686-7091
+                    +55 48 99142-3040
                   </span>
                 </div>
               </div>

@@ -23,18 +23,6 @@ const CARDS: CardItem[] = [
     title: "Eventos e Prêmios"
   },
   {
-    id: 3,
-    url: "https://radioclubecriciuma.com/imagens/CARD3.png",
-    alt: "Programação de Shows e Programas",
-    title: "Programas e Horários"
-  },
-  {
-    id: 4,
-    url: "https://radioclubecriciuma.com/imagens/CARD4.png",
-    alt: "Mais Programação",
-    title: "Mais Programação"
-  },
-  {
     id: 5,
     url: "https://radioclubecriciuma.com/imagens/CARD5.png",
     alt: "Destaque e Novidades",
