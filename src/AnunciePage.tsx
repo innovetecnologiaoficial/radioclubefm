@@ -165,7 +165,7 @@ export default function AnunciePage() {
             </div>
           </div>
 
-          {/* Boletim da Copa */}
+          {/* Boletim do Brasileirão */}
           <div className="flex flex-col-reverse lg:flex-row items-center gap-12 bg-gradient-to-br from-[#0c4e1a] to-[#062c0e] rounded-[3rem] p-8 lg:p-12 shadow-2xl relative overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://diariodonoroeste.com.br/wp-content/uploads/2023/07/20221205-foto-getty-neymar-jr-jogo-brasil-x-coreia-copa-do-mundo-209.jpg')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
             <div className="lg:w-1/2 w-full relative z-10">
@@ -180,7 +180,7 @@ export default function AnunciePage() {
                 <Target className="w-4 h-4" />
                 Venda de Quotas
               </div>
-              <h3 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 uppercase italic">Boletim da Copa</h3>
+              <h3 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 uppercase italic">Boletim do Brasileirão</h3>
               <p className="text-lg text-green-50 mb-8 leading-relaxed">Associe a sua marca à emoção do futebol. Tenha sua empresa divulgada nos boletins esportivos da Clube FM e conecte-se com um público altamente engajado e fiel!</p>
               <ul className="space-y-4 mb-10">
                 <li className="flex items-center gap-3 text-white font-medium text-lg">
@@ -268,10 +268,10 @@ export default function AnunciePage() {
               Pacote Cross-Media Exclusivo
             </div>
             <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
-              Sua marca nos Portais <span className="text-blue-400">Vitrine do Sul</span> e <span className="text-green-400">Cocal do Sul!</span>
+              Sua marca no Portal <span className="text-blue-400">Vitrine do Sul!</span>
             </h2>
             <p className="text-lg text-slate-300 max-w-xl mb-8 leading-relaxed">
-              Os portais de notícias mais acessados do sul catarinense com mais de <span className="text-white font-bold">100 MIL acessos diários</span> e <span className="text-white font-bold">4 MILHÕES de acessos mensais</span>. Conecte sua marca no rádio e na internet!
+              O portal de notícias mais acessado do sul catarinense com mais de <span className="text-white font-bold">100 MIL acessos diários</span> e <span className="text-white font-bold">4 MILHÕES de acessos mensais</span>. Conecte sua marca no rádio e na internet!
             </p>
             <ul className="space-y-4 mb-8">
               <li className="flex items-center gap-3 text-slate-300 font-medium">
@@ -290,8 +290,6 @@ export default function AnunciePage() {
           </div>
           <div className="md:w-1/2 relative w-full h-full min-h-[300px] flex flex-col sm:flex-row items-center justify-center max-w-lg mx-auto bg-slate-800/50 rounded-[2rem] p-8 border border-slate-700/50 shadow-2xl gap-8">
              <img src="https://www.vitrinedosul.com.br/img/f23f14e98b1633ae33c6df8188840cb21436602a.png" alt="Portal Vitrine do Sul" className="w-full max-w-[150px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
-             <div className="hidden sm:block w-px h-1/2 bg-white/10"></div>
-             <img src="https://radioclubecriciuma.com/imagens/logoportalcocal.png" alt="Portal Cocal do Sul" className="w-full max-w-[150px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
           </div>
         </div>
       </section>
