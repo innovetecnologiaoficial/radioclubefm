@@ -1189,7 +1189,7 @@ export default function App() {
               </h4>
               <div className="flex space-x-4 justify-center md:justify-end">
                 <a
-                  href="https://www.facebook.com/radioclubecriciumafm"
+                  href="https://www.facebook.com/profile.php?id=61593649783878"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm text-white flex items-center justify-center hover:bg-[#1877F2] hover:-translate-y-1 transition-all duration-300 shadow-md border border-white/20 hover:border-transparent"
@@ -1197,7 +1197,7 @@ export default function App() {
                   <Facebook className="w-5 h-5 fill-current" />
                 </a>
                 <a
-                  href="https://instagram.com/radioclubecriciumafm"
+                  href="https://www.instagram.com/radioclubefmcriciuma/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm text-white flex items-center justify-center hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] hover:-translate-y-1 transition-all duration-300 shadow-md border border-white/20 hover:border-transparent"
