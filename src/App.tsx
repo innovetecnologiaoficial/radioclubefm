@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import HighlightsSlider from "./components/HighlightsSlider";
+import NextGameCountdown from "./components/NextGameCountdown";
 import {
   Play,
   Pause,
@@ -50,37 +51,6 @@ interface NewsItem {
   description: string;
   imageUrl: string;
 }
-
-const topSongs = [
-  {
-    id: "01",
-    title: 'Gusttavo Lima - Bala Alojada',
-    image:
-      "https://gusttavolima.com.br/wp-content/uploads/2026/02/feitoamao-vol-1.png",
-    link: "https://www.youtube.com/watch?v=wjXyMM3-4j0",
-  },
-  {
-    id: "02",
-    title: "Guilherme & Benuto - Esconde - Esconde",
-    image:
-      "https://s2-g1.glbimg.com/y-kDBpbF9DNlyEP6wj1oREB6r14=/0x0:2000x1405/924x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2020/o/B/8tmlAnTQuguchVHbmkWA/guilherme-e-benuto.jpg",
-    link: "https://www.youtube.com/watch?v=Hue84LFnIPY&list=RDHue84LFnIPY&start_radio=1",
-  },
-  {
-    id: "03",
-    title: "Zé Neto & Cristiano - Mente Sã",
-    image:
-      "https://showsertanejo.com.br/wp-content/uploads/2022/08/4-2.jpg",
-    link: "https://www.youtube.com/watch?v=NDWE8YbbWnA",
-  },
-  {
-    id: "04",
-    title: "Grupo Menos É Mais, Simone Mendes - P do Pecado (Ao Vivo...",
-    image:
-      "https://akamai.sscdn.co/uploadfile/letras/fotos/1/c/d/9/1cd919356bf090366e52f2a0690718a4.jpg",
-    link: "https://www.youtube.com/watch?v=iYjz1Ap1VvU",
-  },
-];
 
 const AppleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -444,7 +414,7 @@ export default function App() {
           {/* YouTube Video Background */}
           <div className="absolute inset-0 w-full h-full pointer-events-none bg-[#663b86] z-0 overflow-hidden">
             <iframe
-              src="https://www.youtube.com/embed/Cqgw36m2b60?autoplay=1&mute=1&loop=1&controls=0&disablekb=1&playsinline=1&playlist=Cqgw36m2b60&start=90&modestbranding=1&rel=0&iv_load_policy=3"
+              src="https://www.youtube.com/embed/qaok6AKM524?autoplay=1&mute=1&loop=1&controls=0&disablekb=1&playsinline=1&playlist=qaok6AKM524&modestbranding=1&rel=0&iv_load_policy=3"
               className="absolute top-1/2 left-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] transform -translate-x-1/2 -translate-y-1/2 scale-[1.3] md:scale-[1.5] opacity-50 mix-blend-overlay"
               allow="autoplay; encrypted-media"
             ></iframe>
@@ -496,53 +466,8 @@ export default function App() {
           </div>
         </section>
 
-         {/* Top 4 Mais Tocadas */}
-        <section id="hits" className="max-w-7xl mx-auto px-4 py-8 mb-8">
-          <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-800">
-              Top Hits da Rádio Clube FM Criciúma
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {topSongs.map((song) => (
-              <div 
-                onClick={(e) => {
-                  e.preventDefault();
-                  const videoId = getYoutubeId(song.link);
-                  if (videoId) {
-                    setPlayingVideoId(videoId);
-                  }
-                }}
-                key={song.id} 
-                className="group cursor-pointer block"
-              >
-                <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-slate-200 mb-4 relative">
-                  <img
-                    src={song.image}
-                    alt={song.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
-                      <Play className="w-6 h-6 text-white fill-white ml-1" />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3 mt-1">
-                  <span className="text-5xl md:text-6xl font-black text-[#ff3e5e] leading-none shrink-0 tracking-tighter mt-1">
-                    {song.id}
-                  </span>
-                  <div>
-                    <h3 className="text-slate-600 font-medium text-sm md:text-base leading-snug pt-1 group-hover:text-[#ff3e5e] transition-colors">
-                      {song.title}
-                    </h3>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Próximo Jogo Section */}
+        <NextGameCountdown />
 
         {/* Eventos, Prêmios e Programação - Carrossel de Cards */}
         <HighlightsSlider />
