@@ -30,7 +30,7 @@ export default function AnunciePage() {
             Voltar para a Rádio
           </Link>
           <div className="flex items-center">
-            <img src="https://radioclubecriciuma.com/imagens/logoclubepng.png" alt="Clube FM" className="h-12 w-auto drop-shadow-md hover:scale-105 transition-transform duration-300" />
+            <img src="https://radioclubecriciuma.com/imagens/logoclubepng.png" alt="Clube FM" fetchPriority="high" loading="eager" className="h-12 w-auto drop-shadow-md hover:scale-105 transition-transform duration-300" />
           </div>
           <button
             onClick={scrollToContact}
@@ -289,7 +289,7 @@ export default function AnunciePage() {
             </ul>
           </div>
           <div className="md:w-1/2 relative w-full h-full min-h-[300px] flex flex-col sm:flex-row items-center justify-center max-w-lg mx-auto bg-slate-800/50 rounded-[2rem] p-8 border border-slate-700/50 shadow-2xl gap-8">
-             <img src="https://www.vitrinedosul.com.br/img/f23f14e98b1633ae33c6df8188840cb21436602a.png" alt="Portal Vitrine do Sul" className="w-full max-w-[150px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
+             <img src="https://www.vitrinedosul.com.br/img/f23f14e98b1633ae33c6df8188840cb21436602a.png" alt="Portal Vitrine do Sul" loading="lazy" className="w-full max-w-[150px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
           </div>
         </div>
       </section>
@@ -366,7 +366,7 @@ export default function AnunciePage() {
           </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
              <a
-              href="https://wa.me/554896867091?text=Ol%C3%A1%! Gostaria de saber mais sobre os planos para anunciar na rádio e no Vitrine do Sul."
+              href="https://wa.me/5548991950093?text=Ol%C3%A1%! Gostaria de saber mais sobre os planos para anunciar na rádio e no Vitrine do Sul."
               target="_blank"
               rel="noopener noreferrer"
               className="w-full sm:w-auto bg-white text-[#ff3e5e] hover:bg-slate-100 px-8 py-4 rounded-full font-black text-lg transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-3"
@@ -376,7 +376,7 @@ export default function AnunciePage() {
             </a>
           </div>
           <p className="mt-6 text-white/80 font-medium">
-            Ou ligue para: +55 48 9686-7091
+            Ou ligue para: +55 48 99195-0093
           </p>
         </div>
       </section>
@@ -388,7 +388,7 @@ export default function AnunciePage() {
 
       {/* Floating WhatsApp Button */}
       <a
-        href="https://wa.me/554896867091?text=Ol%C3%A1%! Gostaria de saber mais sobre os planos para anunciar na rádio e no Vitrine do Sul."
+        href="https://wa.me/5548991950093?text=Ol%C3%A1%! Gostaria de saber mais sobre os planos para anunciar na rádio e no Vitrine do Sul."
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-[0_4px_14px_0_rgba(37,211,102,0.5)] hover:shadow-[0_6px_20px_rgba(37,211,102,0.6)] hover:-translate-y-1 transition-all group flex items-center gap-0 hover:gap-3 overflow-hidden"

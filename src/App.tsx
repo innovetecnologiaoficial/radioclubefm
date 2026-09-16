@@ -131,7 +131,7 @@ export default function App() {
     const nameStr = clubeName ? `\n👤 *Nome:* ${clubeName}` : "";
     const message = `✨ *Novo Cadastro - VIP Clube FM Criciúma* ✨${nameStr}\n📧 *E-mail:* ${clubeEmail}\n📱 *WhatsApp:* ${clubePhone}\n\nQuero participar das promoções e concorrer a prêmios! 🎁`;
     const encodedMessage = encodeURIComponent(message);
-    const waUrl = `https://wa.me/5548991423040?text=${encodedMessage}`;
+    const waUrl = `https://wa.me/5548991950093?text=${encodedMessage}`;
 
     // Smooth timing feedback
     setTimeout(() => {
@@ -417,6 +417,7 @@ export default function App() {
               src="https://www.youtube.com/embed/qaok6AKM524?autoplay=1&mute=1&loop=1&controls=0&disablekb=1&playsinline=1&playlist=qaok6AKM524&modestbranding=1&rel=0&iv_load_policy=3"
               className="absolute top-1/2 left-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] transform -translate-x-1/2 -translate-y-1/2 scale-[1.3] md:scale-[1.5] opacity-50 mix-blend-overlay"
               allow="autoplay; encrypted-media"
+              loading="lazy"
             ></iframe>
             {/* Color Overlay & Fade out */}
             <div className="absolute inset-0 bg-gradient-to-tr from-[#663b86]/95 via-[#663b86]/80 to-[#ff3e5e]/80"></div>
@@ -428,6 +429,8 @@ export default function App() {
               <img
                 src="https://radioclubecriciuma.com/imagens/logoclubepng.png"
                 alt="Clube 87.9 FM"
+                fetchPriority="high"
+                loading="eager"
                 className="h-24 sm:h-28 md:h-[10rem] w-auto object-contain drop-shadow-2xl animate-heartbeat scale-110 md:scale-125 origin-center"
               />
             </div>
@@ -697,6 +700,7 @@ export default function App() {
                       <img
                         src={imagem}
                         alt={item.title}
+                        loading="lazy"
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -750,6 +754,7 @@ export default function App() {
             <img
               src="https://radioclubecriciuma.com/imagens/logoclubepng.png"
               alt="Clube FM Logo"
+              loading="lazy"
               className={`w-9 h-9 object-contain relative z-10 ${isPlaying ? "animate-heartbeat" : ""}`}
             />
           </div>
@@ -803,7 +808,7 @@ export default function App() {
           </button>
 
           <a
-            href="https://wa.me/5548991423040"
+            href="https://wa.me/5548991950093"
             target="_blank"
             rel="noopener noreferrer"
             className="bg-gradient-to-tr from-[#128C7E] to-[#25D366] w-9 h-9 rounded-full flex items-center justify-center border border-white/10 active:scale-95 transition-all shadow-md"
@@ -918,7 +923,7 @@ export default function App() {
           <div className="relative">
             <div className="absolute -inset-2 bg-[#25D366]/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <a
-              href="https://wa.me/5548991423040"
+              href="https://wa.me/5548991950093"
               target="_blank"
               rel="noopener noreferrer"
               className="relative group/wa overflow-hidden bg-gradient-to-tr from-[#128C7E] to-[#25D366] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border border-white/20 shrink-0 shadow-lg hover:shadow-xl hover:scale-110"
@@ -1068,6 +1073,7 @@ export default function App() {
                       <img
                         src="https://www.vitrinedosul.com.br/img/f23f14e98b1633ae33c6df8188840cb21436602a.png"
                         alt="Portal Vitrine do Sul"
+                        loading="lazy"
                         className="h-8 w-auto object-contain transition-transform duration-300 group-hover/partner:scale-105"
                         referrerPolicy="no-referrer"
                       />
@@ -1312,7 +1318,7 @@ export default function App() {
 
                 <div className="flex flex-col items-center md:items-end gap-2.5 w-full md:w-auto">
                   <a
-                    href="https://wa.me/5548991423040?text=Olá!%20Gostaria%20de%20anunciar%20minha%20empresa%20na%20Clube%20FM%20Criciúma.%20Poderia%20me%20enviar%20os%20planos%20comerciais%20e%20formatos%20disponíveis?"
+                    href="https://wa.me/5548991950093?text=Olá!%20Gostaria%20de%20anunciar%20minha%20empresa%20na%20Clube%20FM%20Criciúma.%20Poderia%20me%20enviar%20os%20planos%20comerciais%20e%20formatos%20disponíveis?"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-3 w-full sm:w-auto px-6 py-4 bg-[#25D366] hover:bg-[#128C7E] text-white font-black text-sm uppercase tracking-wider rounded-2xl transition-all duration-300 shadow-lg hover:shadow-emerald-500/20 hover:scale-103 cursor-pointer"
@@ -1329,7 +1335,7 @@ export default function App() {
                   </a>
                   <span className="text-[13px] font-extrabold text-slate-700 tracking-wide flex items-center gap-1.5 justify-center">
                     <Phone className="w-3.5 h-3.5 text-emerald-500 fill-current shrink-0" />
-                    +55 48 99142-3040
+                    +55 48 99195-0093
                   </span>
                 </div>
               </div>

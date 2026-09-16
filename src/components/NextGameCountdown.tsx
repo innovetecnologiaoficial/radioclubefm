@@ -17,49 +17,27 @@ const TEAM_LOGOS: Record<string, string> = {
   "atlético-mg": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/500px-Atletico_mineiro_galo.png",
   "grêmio": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Gremio_logo.svg/500px-Gremio_logo.svg.png",
   "internacional": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Escudo_do_Sport_Club_Internacional.svg/500px-Escudo_do_Sport_Club_Internacional.svg.png",
-  "cuiabá": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/Cuiab%C3%A1_EC_crest.png/500px-Cuiab%C3%A1_EC_crest.png"
+  "cuiabá": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/Cuiab%C3%A1_EC_crest.png/500px-Cuiab%C3%A1_EC_crest.png",
+  "operário-pr": "https://upload.wikimedia.org/wikipedia/commons/9/90/Oper%C3%A1rio_Ferrovi%C3%A1rio_EC_%28no_stars%29.png",
+  "avaí": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8c/Ava%C3%AD_Futebol_Clube_logo.svg/500px-Ava%C3%AD_Futebol_Clube_logo.svg.png"
 };
 
 const UPCOMING_GAMES = [
   {
-    homeTeam: "CRB",
-    awayTeam: "Criciúma",
-    dateStr: "2026-08-30T18:00:00-03:00",
-    label: "30/08/2026 - 18:00",
+    homeTeam: "Criciúma",
+    awayTeam: "Operário-PR",
+    dateStr: "2026-09-21T19:30:00-03:00",
+    label: "21/09/2026 - 19:30",
     competition: "Brasileirão Série B 2026",
-    stadium: "ESTÁDIO REI PELÉ",
-  },
-  {
-    homeTeam: "Criciúma",
-    awayTeam: "Cuiabá",
-    dateStr: "2026-09-04T19:00:00-03:00",
-    label: "04/09/2026 - 19:00",
-    competition: "Brasileirão 2026",
     stadium: "ESTÁDIO HERIBERTO HÜLSE",
   },
   {
-    homeTeam: "Palmeiras",
-    awayTeam: "Criciúma",
-    dateStr: "2026-09-11T16:00:00-03:00",
-    label: "11/09/2026 - 16:00",
-    competition: "Brasileirão 2026",
-    stadium: "ALLIANZ PARQUE",
-  },
-  {
     homeTeam: "Criciúma",
-    awayTeam: "Flamengo",
-    dateStr: "2026-09-18T20:00:00-03:00",
-    label: "18/09/2026 - 20:00",
-    competition: "Brasileirão 2026",
+    awayTeam: "Avaí",
+    dateStr: "2026-09-27T11:00:00-03:00",
+    label: "27/09/2026 - 11:00",
+    competition: "Brasileirão Série B 2026",
     stadium: "ESTÁDIO HERIBERTO HÜLSE",
-  },
-  {
-    homeTeam: "Vasco",
-    awayTeam: "Criciúma",
-    dateStr: "2026-09-25T16:00:00-03:00",
-    label: "25/09/2026 - 16:00",
-    competition: "Brasileirão 2026",
-    stadium: "SÃO JANUÁRIO",
   }
 ];
 
@@ -188,6 +166,7 @@ export default function NextGameCountdown() {
               <img 
                 src={homeLogo} 
                 alt={activeGame.homeTeam} 
+                loading="lazy"
                 className="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all duration-300"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
@@ -203,6 +182,7 @@ export default function NextGameCountdown() {
               <img 
                 src={awayLogo} 
                 alt={activeGame.awayTeam} 
+                loading="lazy"
                 className="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(252,227,21,0.2)] transition-all duration-300"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
