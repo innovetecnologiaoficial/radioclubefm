@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import HighlightsSlider from "./components/HighlightsSlider";
 import NextGameCountdown from "./components/NextGameCountdown";
 import {
@@ -74,6 +75,8 @@ const PlayStoreIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const CLUBE_ANIMATED_LOGO = "https://i.postimg.cc/7LHRFvnw/animacao-clube-87-9.webp";
+
 export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -95,6 +98,16 @@ export default function App() {
   const [showAnunciarModal, setShowAnunciarModal] = useState(false);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [selectedNewsUrl, setSelectedNewsUrl] = useState<string | null>(null);
+
+  // Alternating speech bubble state (Dérick Ramos <-> Melhores do Mundo)
+  const [bubbleIndex, setBubbleIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBubbleIndex((prev) => (prev === 0 ? 1 : 0));
+    }, 3500);
+    return () => clearInterval(timer);
+  }, []);
 
   const getYoutubeId = (url: string) => {
     const match = url.match(/[?&]v=([^&]+)/);
@@ -424,32 +437,175 @@ export default function App() {
             <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-50 to-transparent"></div>
           </div>
 
-          <div className="max-w-4xl mx-auto text-center space-y-2 relative z-10 w-full px-5 flex flex-col items-center">
-            <div className="w-full flex justify-center mb-0 md:mb-2">
-              <img
-                src="https://radioclubecriciuma.com/imagens/logoclubepng.png"
-                alt="Clube 87.9 FM"
-                fetchPriority="high"
-                loading="eager"
-                className="h-24 sm:h-28 md:h-[10rem] w-auto object-contain drop-shadow-2xl animate-heartbeat scale-110 md:scale-125 origin-center"
-              />
+          <div className="max-w-5xl mx-auto text-center space-y-3 relative z-10 w-full px-4 sm:px-6 flex flex-col items-center">
+            {/* Grand Centerpiece Animated WebP Logo with High Prominence */}
+            <div className="w-full flex flex-col items-center justify-center my-1 sm:my-3 pt-6 sm:pt-9 md:pt-12 relative">
+              {/* Giant ambient colorful radial glow */}
+              <div className="absolute w-[85vw] max-w-[650px] h-[85vw] max-h-[650px] bg-gradient-to-tr from-[#fce315]/40 via-[#ff3e5e]/30 to-[#fce315]/20 rounded-full blur-[110px] pointer-events-none -z-10 animate-pulse"></div>
+
+              {/* Main Animated Logo - Big, Majestic & Interactive */}
+              <div
+                onClick={togglePlay}
+                className="relative group cursor-pointer transition-all duration-700 hover:scale-105 active:scale-95 flex flex-col items-center"
+                title={isPlaying ? "Clique para pausar" : "Clique para ouvir ao vivo"}
+              >
+                {/* Nuvem Lúcida e Nítida no canto da cabeça (mais para cima e para a direita) */}
+                <div className="absolute -top-10 sm:-top-13 md:-top-15 lg:-top-18 left-[50%] sm:left-[54%] md:left-[57%] lg:left-[59%] z-30 pointer-events-none select-none">
+                  {/* Container da Nuvem com flutuação orgânica realista */}
+                  <div className="relative w-[218px] sm:w-[260px] md:w-[285px] h-[100px] sm:h-[116px] md:h-[124px] animate-bounce [animation-duration:4.2s]">
+                    {/* SVG Volumétrico Lúcido e Cristalino (Bordas nítidas e límpidas) */}
+                    <svg
+                      viewBox="0 0 295 140"
+                      className="absolute inset-0 w-full h-full drop-shadow-[0_14px_30px_rgba(0,0,0,0.4)] overflow-visible"
+                    >
+                      <defs>
+                        {/* Gradiente principal da nuvem límpida e branca */}
+                        <linearGradient id="lucidCloudMain" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#ffffff" />
+                          <stop offset="65%" stopColor="#ffffff" />
+                          <stop offset="100%" stopColor="#f3edf8" />
+                        </linearGradient>
+
+                        {/* Sombra suave e definida na base da nuvem */}
+                        <linearGradient id="lucidCloudShade" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#e9d8f6" stopOpacity="0" />
+                          <stop offset="100%" stopColor="#d3b5ed" stopOpacity="0.45" />
+                        </linearGradient>
+
+                        {/* Borda límpida branca com sutil brilho perolado */}
+                        <linearGradient id="lucidRimStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#ffffff" />
+                          <stop offset="50%" stopColor="#f8f4ff" />
+                          <stop offset="100%" stopColor="#e2d4f2" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* Silhueta Cumulus Principal Lúcida e Bem Definida */}
+                      <path
+                        d="M 64 104 
+                           A 28 28 0 0 1 30 72 
+                           A 30 30 0 0 1 56 36 
+                           A 35 35 0 0 1 104 20 
+                           A 45 45 0 0 1 175 18 
+                           A 38 38 0 0 1 234 28 
+                           A 32 32 0 0 1 266 62 
+                           A 30 30 0 0 1 244 100 
+                           A 26 26 0 0 1 198 106 
+                           A 30 30 0 0 1 142 108 
+                           A 28 28 0 0 1 96 106 
+                           A 24 24 0 0 1 64 104 Z"
+                        fill="url(#lucidCloudMain)"
+                        stroke="url(#lucidRimStroke)"
+                        strokeWidth="3"
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                      />
+
+                      {/* Sombra 3D Volumétrica bem definida na base */}
+                      <path
+                        d="M 48 82 
+                           Q 72 104 142 106 
+                           Q 222 104 252 84 
+                           A 30 30 0 0 1 244 100 
+                           A 26 26 0 0 1 198 106 
+                           A 30 30 0 0 1 142 108 
+                           A 28 28 0 0 1 96 106 
+                           A 24 24 0 0 1 64 104 
+                           A 28 28 0 0 1 48 82 Z"
+                        fill="url(#lucidCloudShade)"
+                      />
+
+                      {/* Brilhos / Highlights nítidos e lúcidos nos lobos superiores */}
+                      <path
+                        d="M 92 26 Q 110 22 126 27"
+                        stroke="rgba(255, 255, 255, 0.95)"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M 152 22 Q 176 20 196 26"
+                        stroke="rgba(255, 255, 255, 1)"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M 220 32 Q 236 38 246 48"
+                        stroke="rgba(255, 255, 255, 0.95)"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+
+                    {/* Conteúdo Dinâmico no centro da nuvem límpida */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center px-4 pt-1 pb-2">
+                      <div
+                        key={bubbleIndex}
+                        className="flex flex-col items-center justify-center transition-all duration-500 animate-in fade-in zoom-in-95"
+                      >
+                        {bubbleIndex === 0 ? (
+                          <>
+                            {/* Nome do Locutor com tipografia nítida e lúcida */}
+                            <span className="text-xs sm:text-[13px] md:text-sm font-[950] uppercase text-[#5c337c] tracking-wide leading-none drop-shadow-sm">
+                              Eu DÉRICK RAMOS
+                            </span>
+
+                            {/* Horário */}
+                            <span className="text-[9.5px] sm:text-[11px] md:text-xs font-black text-[#ff3e5e] tracking-tight leading-tight mt-1 whitespace-nowrap drop-shadow-sm">
+                              (de Seg a Sexta das 09h às 12h)
+                            </span>
+                          </>
+                        ) : (
+                          /* Melhores do Mundo - Puro e sem nenhuma estrela */
+                          <div className="flex items-center justify-center px-4">
+                            <span className="text-xs sm:text-sm md:text-[15px] font-[950] uppercase tracking-wider text-[#5c337c] whitespace-nowrap drop-shadow-sm">
+                              Melhores do Mundo
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bolinhas Lúcidas e Nítidas descendo até a cabeça */}
+                    <div className="absolute -bottom-3 left-6 sm:left-8 w-5 h-5 rounded-full bg-gradient-to-br from-white via-white to-purple-50 border-2 border-purple-200/60 shadow-md flex items-center justify-center">
+                      <span className="absolute top-0.5 left-0.5 w-1.5 h-1.5 bg-white rounded-full opacity-95"></span>
+                    </div>
+                    <div className="absolute -bottom-7 left-3.5 sm:left-5 w-3.5 h-3.5 rounded-full bg-gradient-to-br from-white via-white to-purple-50 border-[1.5px] border-purple-200/60 shadow-sm flex items-center justify-center">
+                      <span className="absolute top-0.5 left-0.5 w-1 h-1 bg-white rounded-full opacity-95"></span>
+                    </div>
+                    <div className="absolute -bottom-10.5 left-1.5 sm:left-2.5 w-2.5 h-2.5 rounded-full bg-white border border-purple-200/60 shadow-sm"></div>
+                  </div>
+                </div>
+
+                <img
+                  src={CLUBE_ANIMATED_LOGO}
+                  alt="Rádio Clube 87.9 FM Criciúma - Ao Vivo"
+                  fetchPriority="high"
+                  loading="eager"
+                  className="h-48 sm:h-60 md:h-80 lg:h-[22rem] xl:h-[25rem] w-auto max-w-[90vw] object-contain drop-shadow-[0_22px_50px_rgba(0,0,0,0.65)]"
+                />
+
+                {/* Pulsing halo when playing */}
+                {isPlaying && (
+                  <div className="absolute -inset-4 rounded-full bg-[#fce315]/15 blur-xl animate-pulse pointer-events-none"></div>
+                )}
+              </div>
             </div>
 
             <h1
-              className="text-4xl sm:text-5xl md:text-6xl font-[900] tracking-tighter drop-shadow-2xl"
-              style={{ textShadow: "0 8px 15px rgba(0,0,0,0.4)" }}
+              className="text-3xl sm:text-4xl md:text-5xl font-[900] tracking-tight drop-shadow-2xl"
+              style={{ textShadow: "0 8px 15px rgba(0,0,0,0.5)" }}
             >
-              A sua rádio favorita <br /> em Criciúma!
+              A sua rádio favorita em Criciúma!
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium drop-shadow-md pb-4 md:pb-6">
+            <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium drop-shadow-md pb-2 sm:pb-4">
               A Rádio Clube FM Criciúma leva até você a melhor programação de
               Santa Catarina. Sucessos, prêmios e muita alegria o dia todo!
             </p>
 
             <button
               onClick={togglePlay}
-              className="mt-2 md:mt-6 relative inline-flex items-center justify-center group w-[90%] sm:w-auto"
+              className="mt-2 md:mt-4 relative inline-flex items-center justify-center group w-[90%] sm:w-auto cursor-pointer"
             >
               <div className="absolute inset-0 bg-[#fce315]/30 rounded-full animate-ping group-hover:bg-[#fce315]/40 transition-all duration-300"></div>
               <div className="relative bg-[#fce315] text-[#663b86] group-hover:bg-[#ffe83b] group-hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-3 pr-8 pl-6 py-4 md:pr-10 md:pl-8 md:py-5 rounded-full shadow-2xl font-[900] text-base md:text-xl uppercase tracking-wider w-full">
@@ -470,10 +626,14 @@ export default function App() {
         </section>
 
         {/* Próximo Jogo Section */}
-        <NextGameCountdown />
+        <div id="jogos">
+          <NextGameCountdown />
+        </div>
 
         {/* Eventos, Prêmios e Programação - Carrossel de Cards */}
-        <HighlightsSlider />
+        <div id="destaques">
+          <HighlightsSlider />
+        </div>
 
         {/* App Download Section */}
         <section
@@ -488,7 +648,6 @@ export default function App() {
             <div className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-white/10 rounded-full blur-3xl"></div>
             <div className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-[20rem] h-[20rem] bg-[#fce315]/20 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-[25rem] h-[25rem] bg-[#fce315]/10 rounded-full blur-3xl"></div>
-
 
             {/* Content Left Side */}
             <div className="relative z-10 max-w-xl flex flex-col items-center md:items-start text-center md:text-left w-full md:w-7/12">
@@ -752,10 +911,10 @@ export default function App() {
               className={`absolute -inset-1 bg-[#ff3e5e]/30 blur-sm rounded-full transition-opacity ${isPlaying ? "opacity-100" : "opacity-0"}`}
             ></div>
             <img
-              src="https://radioclubecriciuma.com/imagens/logoclubepng.png"
+              src={CLUBE_ANIMATED_LOGO}
               alt="Clube FM Logo"
               loading="lazy"
-              className={`w-9 h-9 object-contain relative z-10 ${isPlaying ? "animate-heartbeat" : ""}`}
+              className={`w-11 h-11 object-contain relative z-10 ${isPlaying ? "animate-heartbeat" : ""}`}
             />
           </div>
           <div className="flex flex-col">

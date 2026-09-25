@@ -30,7 +30,7 @@ export default function AnunciePage() {
             Voltar para a Rádio
           </Link>
           <div className="flex items-center">
-            <img src="https://radioclubecriciuma.com/imagens/logoclubepng.png" alt="Clube FM" fetchPriority="high" loading="eager" className="h-12 w-auto drop-shadow-md hover:scale-105 transition-transform duration-300" />
+            <img src="https://i.postimg.cc/7LHRFvnw/animacao-clube-87-9.webp" alt="Clube FM 87.9" fetchPriority="high" loading="eager" className="h-14 sm:h-16 w-auto drop-shadow-md hover:scale-105 transition-transform duration-300" />
           </div>
           <button
             onClick={scrollToContact}

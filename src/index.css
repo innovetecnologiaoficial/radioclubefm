@@ -5,19 +5,57 @@
     transform: scale(1);
   }
   14% {
-    transform: scale(1.1);
+    transform: scale(1.08);
   }
   28% {
     transform: scale(1);
   }
   42% {
-    transform: scale(1.1);
+    transform: scale(1.08);
   }
   70% {
     transform: scale(1);
   }
 }
 
+@keyframes waveBar {
+  0%, 100% {
+    height: 4px;
+  }
+  50% {
+    height: 18px;
+  }
+}
+
 .animate-heartbeat {
   animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.font-marker {
+  font-family: 'Permanent Marker', cursive, sans-serif;
+}
+
+.font-hand {
+  font-family: 'Caveat', cursive, sans-serif;
+}
+
+.font-display {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* 3D text effect for CORAÇÃO */
+.text-3d-coracao {
+  text-shadow: 
+    0 1px 0 #b3001e,
+    0 2px 0 #99001a,
+    0 3px 0 #800015,
+    0 4px 0 #660011,
+    0 5px 0 #4d000d,
+    0 6px 1px rgba(0,0,0,.3),
+    0 0 10px rgba(255, 32, 78, 0.5),
+    0 10px 25px rgba(0, 0, 0, 0.6);
+}
+
+.text-stroke-dark {
+  -webkit-text-stroke: 2px #0a0a0f;
 }
