@@ -75,7 +75,7 @@ const PlayStoreIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const CLUBE_ANIMATED_LOGO = "https://i.postimg.cc/7LHRFvnw/animacao-clube-87-9.webp";
+const CLUBE_ANIMATED_LOGO = "https://radioclubecriciuma.com/imagens/logo_radioclubefmcriciuma.png";
 
 export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -439,7 +439,7 @@ export default function App() {
 
           <div className="max-w-5xl mx-auto text-center space-y-3 relative z-10 w-full px-4 sm:px-6 flex flex-col items-center">
             {/* Grand Centerpiece Animated WebP Logo with High Prominence */}
-            <div className="w-full flex flex-col items-center justify-center my-1 sm:my-3 pt-6 sm:pt-9 md:pt-12 relative">
+            <div className="w-full flex flex-col items-center justify-center my-1 sm:my-3 pt-12 sm:pt-16 md:pt-20 relative">
               {/* Giant ambient colorful radial glow */}
               <div className="absolute w-[85vw] max-w-[650px] h-[85vw] max-h-[650px] bg-gradient-to-tr from-[#fce315]/40 via-[#ff3e5e]/30 to-[#fce315]/20 rounded-full blur-[110px] pointer-events-none -z-10 animate-pulse"></div>
 
@@ -449,14 +449,14 @@ export default function App() {
                 className="relative group cursor-pointer transition-all duration-700 hover:scale-105 active:scale-95 flex flex-col items-center"
                 title={isPlaying ? "Clique para pausar" : "Clique para ouvir ao vivo"}
               >
-                {/* Nuvem Lúcida e Nítida no canto da cabeça (mais para cima e para a direita) */}
-                <div className="absolute -top-10 sm:-top-13 md:-top-15 lg:-top-18 left-[50%] sm:left-[54%] md:left-[57%] lg:left-[59%] z-30 pointer-events-none select-none">
+                {/* Nuvem Lúcida e Nítida - Abrindo para o lado esquerdo no espaço livre, sem cobrir o rosto */}
+                <div className="absolute -top-10 sm:-top-16 md:-top-20 lg:-top-24 right-[50%] sm:right-[52%] md:right-[54%] lg:right-[55%] z-30 pointer-events-none select-none">
                   {/* Container da Nuvem com flutuação orgânica realista */}
-                  <div className="relative w-[218px] sm:w-[260px] md:w-[285px] h-[100px] sm:h-[116px] md:h-[124px] animate-bounce [animation-duration:4.2s]">
-                    {/* SVG Volumétrico Lúcido e Cristalino (Bordas nítidas e límpidas) */}
+                  <div className="relative w-[165px] sm:w-[260px] md:w-[285px] h-[75px] sm:h-[116px] md:h-[124px] animate-bounce [animation-duration:4.2s]">
+                    {/* SVG Volumétrico Lúcido e Cristalino espelhado para abrir para o lado esquerdo */}
                     <svg
                       viewBox="0 0 295 140"
-                      className="absolute inset-0 w-full h-full drop-shadow-[0_14px_30px_rgba(0,0,0,0.4)] overflow-visible"
+                      className="absolute inset-0 w-full h-full drop-shadow-[0_14px_30px_rgba(0,0,0,0.4)] overflow-visible scale-x-[-1]"
                     >
                       <defs>
                         {/* Gradiente principal da nuvem límpida e branca */}
@@ -537,7 +537,7 @@ export default function App() {
                     </svg>
 
                     {/* Conteúdo Dinâmico no centro da nuvem límpida */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center px-4 pt-1 pb-2">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center px-2.5 sm:px-4 pt-0.5 sm:pt-1 pb-1 sm:pb-2">
                       <div
                         key={bubbleIndex}
                         className="flex flex-col items-center justify-center transition-all duration-500 animate-in fade-in zoom-in-95"
@@ -545,19 +545,19 @@ export default function App() {
                         {bubbleIndex === 0 ? (
                           <>
                             {/* Nome do Locutor com tipografia nítida e lúcida */}
-                            <span className="text-xs sm:text-[13px] md:text-sm font-[950] uppercase text-[#5c337c] tracking-wide leading-none drop-shadow-sm">
+                            <span className="text-[9.5px] sm:text-[13px] md:text-sm font-[950] uppercase text-[#5c337c] tracking-wide leading-none drop-shadow-sm">
                               Eu DÉRICK RAMOS
                             </span>
 
                             {/* Horário */}
-                            <span className="text-[9.5px] sm:text-[11px] md:text-xs font-black text-[#ff3e5e] tracking-tight leading-tight mt-1 whitespace-nowrap drop-shadow-sm">
+                            <span className="text-[7.5px] sm:text-[11px] md:text-xs font-black text-[#ff3e5e] tracking-tight leading-tight mt-1 whitespace-nowrap drop-shadow-sm">
                               (de Seg a Sexta das 09h às 12h)
                             </span>
                           </>
                         ) : (
                           /* Melhores do Mundo - Puro e sem nenhuma estrela */
-                          <div className="flex items-center justify-center px-4">
-                            <span className="text-xs sm:text-sm md:text-[15px] font-[950] uppercase tracking-wider text-[#5c337c] whitespace-nowrap drop-shadow-sm">
+                          <div className="flex items-center justify-center px-2 sm:px-4">
+                            <span className="text-[10px] sm:text-sm md:text-[15px] font-[950] uppercase tracking-wider text-[#5c337c] whitespace-nowrap drop-shadow-sm">
                               Melhores do Mundo
                             </span>
                           </div>
@@ -565,14 +565,14 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Bolinhas Lúcidas e Nítidas descendo até a cabeça */}
-                    <div className="absolute -bottom-3 left-6 sm:left-8 w-5 h-5 rounded-full bg-gradient-to-br from-white via-white to-purple-50 border-2 border-purple-200/60 shadow-md flex items-center justify-center">
-                      <span className="absolute top-0.5 left-0.5 w-1.5 h-1.5 bg-white rounded-full opacity-95"></span>
+                    {/* Bolinhas Lúcidas e Nítidas no canto direito da nuvem apontando para o fone sem tocar no rosto */}
+                    <div className="absolute -bottom-1.5 sm:-bottom-2.5 right-7 sm:right-14 w-3 sm:w-4 h-3 sm:h-4 rounded-full bg-gradient-to-br from-white via-white to-purple-50 border-[1.5px] sm:border-2 border-purple-200/70 shadow-md flex items-center justify-center">
+                      <span className="absolute top-0.5 left-0.5 w-1 sm:w-1.5 h-1 sm:h-1.5 bg-white rounded-full opacity-95"></span>
                     </div>
-                    <div className="absolute -bottom-7 left-3.5 sm:left-5 w-3.5 h-3.5 rounded-full bg-gradient-to-br from-white via-white to-purple-50 border-[1.5px] border-purple-200/60 shadow-sm flex items-center justify-center">
-                      <span className="absolute top-0.5 left-0.5 w-1 h-1 bg-white rounded-full opacity-95"></span>
+                    <div className="absolute -bottom-3.5 sm:-bottom-5 right-5 sm:right-10 w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-gradient-to-br from-white via-white to-purple-50 border border-purple-200/70 shadow-sm flex items-center justify-center">
+                      <span className="absolute top-0.5 left-0.5 w-0.5 sm:w-1 h-0.5 sm:h-1 bg-white rounded-full opacity-95"></span>
                     </div>
-                    <div className="absolute -bottom-10.5 left-1.5 sm:left-2.5 w-2.5 h-2.5 rounded-full bg-white border border-purple-200/60 shadow-sm"></div>
+                    <div className="absolute -bottom-5 sm:-bottom-7.5 right-3.5 sm:right-7 w-1.5 sm:w-1.5 h-1.5 sm:h-1.5 rounded-full bg-white border border-purple-200/70 shadow-sm"></div>
                   </div>
                 </div>
 
@@ -581,7 +581,7 @@ export default function App() {
                   alt="Rádio Clube 87.9 FM Criciúma - Ao Vivo"
                   fetchPriority="high"
                   loading="eager"
-                  className="h-48 sm:h-60 md:h-80 lg:h-[22rem] xl:h-[25rem] w-auto max-w-[90vw] object-contain drop-shadow-[0_22px_50px_rgba(0,0,0,0.65)]"
+                  className="h-56 sm:h-64 md:h-80 lg:h-[22rem] xl:h-[25rem] w-auto max-w-[90vw] object-contain drop-shadow-[0_22px_50px_rgba(0,0,0,0.65)]"
                 />
 
                 {/* Pulsing halo when playing */}
