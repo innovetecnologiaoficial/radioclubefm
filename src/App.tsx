@@ -53,6 +53,8 @@ interface NewsItem {
   imageUrl: string;
 }
 
+const VITRINE_SEM_FOTO = "https://www.vitrinedosul.com.br/img/sem-foto.jpg";
+
 const isValidImageUrl = (url: string | null | undefined): boolean => {
   if (!url || typeof url !== "string") return false;
   const trimmed = url.trim();
@@ -65,89 +67,8 @@ const isValidImageUrl = (url: string | null | undefined): boolean => {
     lower.includes(".jpeg") ||
     lower.includes(".png") ||
     lower.includes(".avif") ||
-    lower.includes(".gif") ||
-    lower.includes("unsplash.com") ||
-    lower.includes("wikimedia.org")
+    lower.includes(".gif")
   );
-};
-
-const getThematicNewsImage = (title: string = "", desc: string = ""): string => {
-  const text = (title + " " + desc).toLowerCase();
-  if (
-    text.includes("futebol") ||
-    text.includes("criciúma") ||
-    text.includes("avaí") ||
-    text.includes("gol") ||
-    text.includes("jogo") ||
-    text.includes("clube") ||
-    text.includes("vitória") ||
-    text.includes("derrota") ||
-    text.includes("campeonato") ||
-    text.includes("chapecoense") ||
-    text.includes("esporte")
-  ) {
-    return "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80";
-  }
-  if (
-    text.includes("aposta") ||
-    text.includes("bet") ||
-    text.includes("dinheiro") ||
-    text.includes("economia") ||
-    text.includes("pme") ||
-    text.includes("empresa") ||
-    text.includes("imposto") ||
-    text.includes("ibs") ||
-    text.includes("cbs") ||
-    text.includes("negócio") ||
-    text.includes("financ")
-  ) {
-    return "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80";
-  }
-  if (
-    text.includes("saúde") ||
-    text.includes("mental") ||
-    text.includes("médic") ||
-    text.includes("hospital") ||
-    text.includes("vacina") ||
-    text.includes("doenç") ||
-    text.includes("endividad")
-  ) {
-    return "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&q=80";
-  }
-  if (
-    text.includes("ia") ||
-    text.includes("inteligência") ||
-    text.includes("copilot") ||
-    text.includes("microsoft") ||
-    text.includes("tecnologia") ||
-    text.includes("software") ||
-    text.includes("digital") ||
-    text.includes("app")
-  ) {
-    return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80";
-  }
-  if (
-    text.includes("polícia") ||
-    text.includes("preso") ||
-    text.includes("crime") ||
-    text.includes("acidente") ||
-    text.includes("segurança") ||
-    text.includes("justiça")
-  ) {
-    return "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&q=80";
-  }
-  if (
-    text.includes("turismo") ||
-    text.includes("viagem") ||
-    text.includes("hotel") ||
-    text.includes("resort") ||
-    text.includes("praia") ||
-    text.includes("natureza") ||
-    text.includes("açude")
-  ) {
-    return "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80";
-  }
-  return "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80";
 };
 
 const AppleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -485,9 +406,9 @@ export default function App() {
             }
           }
 
-          // 5. Se não houver imagem válida no feed, aplicar imagem temática correspondente ao conteúdo
+          // 5. Se não houver foto anexada à matéria, utilizar a imagem oficial "sem-foto" do próprio portal
           if (!imagem) {
-            imagem = getThematicNewsImage(item.title, item.description);
+            imagem = VITRINE_SEM_FOTO;
           }
 
           return {
@@ -958,7 +879,7 @@ export default function App() {
           ) : news.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {news.map((item, idx) => {
-                const imagem = item.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80";
+                const imagem = item.imageUrl || VITRINE_SEM_FOTO;
                 
                 // Remove HTML da descrição de forma limpa
                 const cleanDesc = item.description
@@ -980,7 +901,7 @@ export default function App() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         onError={(e) => {
                           e.currentTarget.onerror = null;
-                          e.currentTarget.src = getThematicNewsImage(item.title, item.description);
+                          e.currentTarget.src = VITRINE_SEM_FOTO;
                         }}
                       />
                       {/* Badge de Data */}
