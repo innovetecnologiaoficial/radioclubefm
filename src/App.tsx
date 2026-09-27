@@ -53,6 +53,103 @@ interface NewsItem {
   imageUrl: string;
 }
 
+const isValidImageUrl = (url: string | null | undefined): boolean => {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) return false;
+  if (trimmed.endsWith("/")) return false; // Despreza diretórios sem arquivo como /images/noticias/4371/
+  const lower = trimmed.toLowerCase();
+  return (
+    lower.includes(".webp") ||
+    lower.includes(".jpg") ||
+    lower.includes(".jpeg") ||
+    lower.includes(".png") ||
+    lower.includes(".avif") ||
+    lower.includes(".gif") ||
+    lower.includes("unsplash.com") ||
+    lower.includes("wikimedia.org")
+  );
+};
+
+const getThematicNewsImage = (title: string = "", desc: string = ""): string => {
+  const text = (title + " " + desc).toLowerCase();
+  if (
+    text.includes("futebol") ||
+    text.includes("criciúma") ||
+    text.includes("avaí") ||
+    text.includes("gol") ||
+    text.includes("jogo") ||
+    text.includes("clube") ||
+    text.includes("vitória") ||
+    text.includes("derrota") ||
+    text.includes("campeonato") ||
+    text.includes("chapecoense") ||
+    text.includes("esporte")
+  ) {
+    return "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80";
+  }
+  if (
+    text.includes("aposta") ||
+    text.includes("bet") ||
+    text.includes("dinheiro") ||
+    text.includes("economia") ||
+    text.includes("pme") ||
+    text.includes("empresa") ||
+    text.includes("imposto") ||
+    text.includes("ibs") ||
+    text.includes("cbs") ||
+    text.includes("negócio") ||
+    text.includes("financ")
+  ) {
+    return "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80";
+  }
+  if (
+    text.includes("saúde") ||
+    text.includes("mental") ||
+    text.includes("médic") ||
+    text.includes("hospital") ||
+    text.includes("vacina") ||
+    text.includes("doenç") ||
+    text.includes("endividad")
+  ) {
+    return "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&q=80";
+  }
+  if (
+    text.includes("ia") ||
+    text.includes("inteligência") ||
+    text.includes("copilot") ||
+    text.includes("microsoft") ||
+    text.includes("tecnologia") ||
+    text.includes("software") ||
+    text.includes("digital") ||
+    text.includes("app")
+  ) {
+    return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80";
+  }
+  if (
+    text.includes("polícia") ||
+    text.includes("preso") ||
+    text.includes("crime") ||
+    text.includes("acidente") ||
+    text.includes("segurança") ||
+    text.includes("justiça")
+  ) {
+    return "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&q=80";
+  }
+  if (
+    text.includes("turismo") ||
+    text.includes("viagem") ||
+    text.includes("hotel") ||
+    text.includes("resort") ||
+    text.includes("praia") ||
+    text.includes("natureza") ||
+    text.includes("açude")
+  ) {
+    return "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80";
+  }
+  return "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80";
+};
+
 const AppleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -349,29 +446,48 @@ export default function App() {
           throw new Error("Formato inválido do feed externo");
         }
         const mapped = data.items.slice(0, 9).map((item: any) => {
-          let imagem = item.thumbnail;
+          let imagem = "";
           
-          // Check enclosure format (sometimes a string, sometimes an object with url or link)
-          if (!imagem && item.enclosure) {
+          // 1. Check enclosure format (sometimes string, sometimes object with link or url)
+          if (item.enclosure) {
+            let encCandidate = "";
             if (typeof item.enclosure === "string") {
-              imagem = item.enclosure;
+              encCandidate = item.enclosure;
             } else if (item.enclosure.link) {
-              imagem = item.enclosure.link;
+              encCandidate = item.enclosure.link;
             } else if (item.enclosure.url) {
-              imagem = item.enclosure.url;
+              encCandidate = item.enclosure.url;
+            }
+            if (isValidImageUrl(encCandidate)) {
+              imagem = encCandidate;
             }
           }
 
-          // Check media:content just in case
-          if (!imagem && item['media:content'] && item['media:content']['$'] && item['media:content']['$'].url) {
-            imagem = item['media:content']['$'].url;
+          // 2. Check thumbnail
+          if (!imagem && isValidImageUrl(item.thumbnail)) {
+            imagem = item.thumbnail;
           }
 
-          // Fallback to checking description or content for standard img tags
-          if (!imagem || imagem === "") {
-            const textToSearch = (item.description || "") + (item.content || "");
+          // 3. Check media:content
+          if (!imagem && item['media:content'] && item['media:content']['$'] && item['media:content']['$'].url) {
+            const medCandidate = item['media:content']['$'].url;
+            if (isValidImageUrl(medCandidate)) {
+              imagem = medCandidate;
+            }
+          }
+
+          // 4. Fallback to checking description or content for standard img tags
+          if (!imagem) {
+            const textToSearch = (item.description || "") + " " + (item.content || "");
             const match = textToSearch.match(/<img[^>]+src=["']([^"']+)["']/i);
-            imagem = match ? match[1] : "";
+            if (match && isValidImageUrl(match[1])) {
+              imagem = match[1];
+            }
+          }
+
+          // 5. Se não houver imagem válida no feed, aplicar imagem temática correspondente ao conteúdo
+          if (!imagem) {
+            imagem = getThematicNewsImage(item.title, item.description);
           }
 
           return {
@@ -862,6 +978,10 @@ export default function App() {
                         loading="lazy"
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = getThematicNewsImage(item.title, item.description);
+                        }}
                       />
                       {/* Badge de Data */}
                       <span className="absolute top-4 right-4 bg-slate-900/75 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider backdrop-blur-md">
@@ -1541,14 +1661,26 @@ export default function App() {
       {selectedNewsUrl && (
         <div className="fixed inset-0 z-[50] flex flex-col bg-white">
           <div className="h-14 bg-[#4b2766] flex items-center justify-between px-4 shrink-0 shadow-md relative z-10">
-            <h3 className="text-white font-bold tracking-wide truncate pr-4">Clube FM - Notícias</h3>
-            <button 
-              onClick={() => setSelectedNewsUrl(null)}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors shrink-0"
-              aria-label="Close news"
-            >
-               <X className="w-5 h-5" />
-            </button>
+            <h3 className="text-white font-bold tracking-wide truncate pr-4">Clube FM - Notícias do Portal</h3>
+            <div className="flex items-center gap-2">
+              <a
+                href={selectedNewsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors shrink-0"
+                title="Abrir diretamente no Portal Vitrine do Sul"
+              >
+                <span>Abrir no Portal</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+              <button 
+                onClick={() => setSelectedNewsUrl(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                aria-label="Close news"
+              >
+                 <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
           <div className="flex-1 w-full bg-slate-50 relative pb-[76px] md:pb-0">
             <iframe
