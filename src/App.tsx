@@ -533,11 +533,11 @@ export default function App() {
 
           <div className="max-w-5xl mx-auto text-center space-y-3 relative z-10 w-full px-4 sm:px-6 flex flex-col items-center">
             {/* Grand Centerpiece Official Logo with Interactive Play */}
-            <div className="w-full flex flex-col items-center justify-center my-3 sm:my-6 pt-6 sm:pt-10 md:pt-12 relative">
+            <div className="w-full flex flex-col items-center justify-center my-2 sm:my-3 pt-3 sm:pt-5 md:pt-6 relative">
               {/* Giant ambient colorful radial glow */}
-              <div className="absolute w-[85vw] max-w-[550px] h-[85vw] max-h-[550px] bg-gradient-to-tr from-[#fce315]/35 via-[#ff3e5e]/30 to-[#fce315]/20 rounded-full blur-[110px] pointer-events-none -z-10 animate-pulse"></div>
+              <div className="absolute w-[85vw] max-w-[320px] h-[85vw] max-h-[320px] bg-gradient-to-tr from-[#fce315]/35 via-[#ff3e5e]/30 to-[#fce315]/20 rounded-full blur-[90px] pointer-events-none -z-10 animate-pulse"></div>
 
-              {/* Logo Oficial Clube FM - Grandiosa, Centralizada e Interativa */}
+              {/* Logo Oficial Clube FM - Centralizada e Interativa */}
               <div
                 onClick={togglePlay}
                 className="relative group cursor-pointer transition-all duration-500 hover:scale-105 active:scale-95 flex flex-col items-center"
@@ -546,7 +546,7 @@ export default function App() {
                 <div className="relative">
                   {/* Halo luminoso ao tocar */}
                   {isPlaying && (
-                    <div className="absolute -inset-6 rounded-full bg-[#fce315]/30 blur-2xl animate-pulse pointer-events-none"></div>
+                    <div className="absolute -inset-4 rounded-full bg-[#fce315]/30 blur-xl animate-pulse pointer-events-none"></div>
                   )}
 
                   <img
@@ -554,7 +554,7 @@ export default function App() {
                     alt="Rádio Clube FM Criciúma 87.9"
                     fetchPriority="high"
                     loading="eager"
-                    className={`h-56 sm:h-64 md:h-80 lg:h-96 w-auto max-w-[90vw] object-contain drop-shadow-[0_22px_55px_rgba(0,0,0,0.65)] transition-transform duration-500 ${
+                    className={`h-28 sm:h-32 md:h-40 lg:h-48 w-auto max-w-[90vw] object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.65)] transition-transform duration-500 ${
                       isPlaying ? "animate-heartbeat" : ""
                     }`}
                   />
