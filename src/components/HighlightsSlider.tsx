@@ -24,7 +24,7 @@ const CARDS: CardItem[] = [
   },
   {
     id: 5,
-    url: "https://radioclubecriciuma.com/imagens/CARD5.png",
+    url: "https://radioclubecriciuma.com/imagens/CARD5.png?t=1728670154",
     alt: "Destaque e Novidades",
     title: "Novidades"
   },
@@ -136,7 +136,7 @@ export default function HighlightsSlider() {
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 overflow-hidden py-2 px-1">
           {/* Card Left */}
-          <div className="relative overflow-hidden rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-slate-100/60 bg-white">
+          <div className="relative overflow-hidden rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-slate-100/60 aspect-[3/2] w-full">
             <AnimatePresence mode="popLayout" custom={direction}>
               <motion.div
                 key={`left-${leftCard.id}`}
@@ -151,14 +151,14 @@ export default function HighlightsSlider() {
                   src={leftCard.url}
                   alt={leftCard.alt}
                   referrerPolicy="no-referrer"
-                  className="w-full h-auto block select-none rounded-[2.5rem] hover:scale-[1.01] transition-transform duration-500"
+                  className="w-full h-full object-cover select-none hover:scale-[1.01] transition-transform duration-500"
                 />
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* Card Right - visible on md and up desktops/tablets */}
-          <div className="hidden md:block relative overflow-hidden rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-slate-100/60 bg-white">
+          <div className="hidden md:block relative overflow-hidden rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-slate-100/60 aspect-[3/2] w-full">
             <AnimatePresence mode="popLayout" custom={direction}>
               <motion.div
                 key={`right-${rightCard.id}`}
@@ -173,7 +173,7 @@ export default function HighlightsSlider() {
                   src={rightCard.url}
                   alt={rightCard.alt}
                   referrerPolicy="no-referrer"
-                  className="w-full h-auto block select-none rounded-[2.5rem] hover:scale-[1.01] transition-transform duration-500"
+                  className="w-full h-full object-cover select-none hover:scale-[1.01] transition-transform duration-500"
                 />
               </motion.div>
             </AnimatePresence>

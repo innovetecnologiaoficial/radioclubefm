@@ -61,7 +61,7 @@ app.get('/api/news', async (req, res) => {
         link: item.link,
         pubDate: item.pubDate,
         description: item.contentSnippet || item.description || "",
-        imageUrl: imageUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&q=80',
+        imageUrl: imageUrl || 'https://www.vitrinedosul.com.br/img/sem-foto.jpg',
       };
     });
 
@@ -72,6 +72,12 @@ app.get('/api/news', async (req, res) => {
     console.error('Error fetching RSS:', error);
     res.status(500).json({ error: 'Failed to fetch news' });
   }
+});
+
+app.get('/api/clear-cache', (req, res) => {
+  newsCache = null;
+  lastFetchTime = 0;
+  res.json({ success: true, message: 'Cache do servidor limpo com sucesso' });
 });
 
 app.get('/api/weather', async (req, res) => {
@@ -99,8 +105,19 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+        }
+      }
+    }));
     app.get('*', (req, res) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
