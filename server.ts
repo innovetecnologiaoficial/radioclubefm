@@ -10,6 +10,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 
 const parser = new Parser({
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+  },
   customFields: {
     item: ['media:content', 'content:encoded', 'description'],
   }
@@ -18,7 +22,7 @@ const parser = new Parser({
 // Cache the news to avoid hammering the RSS feed
 let newsCache: any = null;
 let lastFetchTime = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
 app.get('/api/news', async (req, res) => {
   const now = Date.now();

@@ -289,7 +289,16 @@ export default function AnunciePage() {
             </ul>
           </div>
           <div className="md:w-1/2 relative w-full h-full min-h-[300px] flex flex-col sm:flex-row items-center justify-center max-w-lg mx-auto bg-slate-800/50 rounded-[2rem] p-8 border border-slate-700/50 shadow-2xl gap-8">
-             <img src="https://www.vitrinedosul.com.br/img/f23f14e98b1633ae33c6df8188840cb21436602a.png" alt="Portal Vitrine do Sul" loading="lazy" className="w-full max-w-[150px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500" />
+             <img 
+               src="https://www.vitrinedosul.com.br/img/4eb1ee71ac9cfc5071ee3ef95c0757fa655e9e94.png" 
+               alt="Portal Vitrine do Sul" 
+               loading="lazy" 
+               className="w-full max-w-[150px] object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-500"
+               onError={(e) => {
+                 e.currentTarget.onerror = null;
+                 e.currentTarget.src = "/images/vitrine-do-sul-logo.png";
+               }}
+             />
           </div>
         </div>
       </section>

@@ -53,6 +53,8 @@ interface NewsItem {
 }
 
 const VITRINE_SEM_FOTO = "https://www.vitrinedosul.com.br/img/sem-foto.jpg";
+const VITRINE_LOGO = "https://www.vitrinedosul.com.br/img/4eb1ee71ac9cfc5071ee3ef95c0757fa655e9e94.png";
+const LOCAL_VITRINE_LOGO = "/images/vitrine-do-sul-logo.png";
 
 const isValidImageUrl = (url: string | null | undefined): boolean => {
   if (!url || typeof url !== "string") return false;
@@ -345,79 +347,64 @@ export default function App() {
   // In a real scenario, this would be the actual stream URL!
   const STREAM_URL = "https://stream2.svrdedicado.org/8258/stream";
 
-  useEffect(() => {
-    fetch("https://api.rss2json.com/v1/api.json?rss_url=https://www.vitrinedosul.com.br/rss.xml")
-      .then((res) => {
-        if (!res.ok) throw new Error("Erro na requisição ao RSS externo");
-        return res.json();
-      })
-      .then((data) => {
-        if (!data || !data.items || !Array.isArray(data.items)) {
-          throw new Error("Formato inválido do feed externo");
-        }
-        const mapped = data.items.slice(0, 9).map((item: any) => {
-          let imagem = "";
-          
-          // 1. Check enclosure format (sometimes string, sometimes object with link or url)
-          if (item.enclosure) {
-            let encCandidate = "";
-            if (typeof item.enclosure === "string") {
-              encCandidate = item.enclosure;
-            } else if (item.enclosure.link) {
-              encCandidate = item.enclosure.link;
-            } else if (item.enclosure.url) {
-              encCandidate = item.enclosure.url;
-            }
-            if (isValidImageUrl(encCandidate)) {
-              imagem = encCandidate;
-            }
-          }
-
-          // 2. Check thumbnail
-          if (!imagem && isValidImageUrl(item.thumbnail)) {
-            imagem = item.thumbnail;
-          }
-
-          // 3. Check media:content
-          if (!imagem && item['media:content'] && item['media:content']['$'] && item['media:content']['$'].url) {
-            const medCandidate = item['media:content']['$'].url;
-            if (isValidImageUrl(medCandidate)) {
-              imagem = medCandidate;
-            }
-          }
-
-          // 4. Fallback to checking description or content for standard img tags
-          if (!imagem) {
-            const textToSearch = (item.description || "") + " " + (item.content || "");
-            const match = textToSearch.match(/<img[^>]+src=["']([^"']+)["']/i);
-            if (match && isValidImageUrl(match[1])) {
-              imagem = match[1];
-            }
-          }
-
-          // 5. Se não houver foto anexada à matéria, utilizar a imagem oficial "sem-foto" do próprio portal
-          if (!imagem) {
-            imagem = VITRINE_SEM_FOTO;
-          }
-
-          return {
-            title: item.title,
-            link: item.link,
-            pubDate: item.pubDate || new Date().toISOString(),
-            description: item.description || "",
-            imageUrl: imagem,
-          };
-        });
-        setNews(mapped);
+  const fetchNews = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // 1. Fetch via our server endpoint (/api/news) which directly parses the RSS
+      const res = await fetch("/api/news");
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setNews(data);
         setError(null);
         setLoading(false);
-      })
-      .catch((externalErr) => {
-        console.warn("Fonte de notícias falhou:", externalErr.message);
-        setError("Não conseguimos carregar as notícias no momento. Tente novamente mais tarde.");
-        setLoading(false);
-      });
+        return;
+      }
+      throw new Error("Nenhum item retornado do feed");
+    } catch (apiErr: any) {
+      console.warn("API interna de notícias falhou, tentando fallback:", apiErr.message);
+      try {
+        // 2. Fallback via public proxy to RSS xml directly
+        const fallbackRes = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://www.vitrinedosul.com.br/rss.xml"));
+        if (!fallbackRes.ok) throw new Error("Fallback HTTP error");
+        const xmlText = await fallbackRes.text();
+        const xmlDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+        const xmlItems = Array.from(xmlDoc.querySelectorAll("item")).slice(0, 9);
+        if (xmlItems.length > 0) {
+          const fallbackNews = xmlItems.map((el) => {
+            const title = el.querySelector("title")?.textContent || "";
+            const link = el.querySelector("link")?.textContent || "";
+            const pubDate = el.querySelector("pubDate")?.textContent || new Date().toISOString();
+            const rawDesc = el.querySelector("description")?.textContent || "";
+            let img = el.querySelector("enclosure")?.getAttribute("url") || "";
+            if (!img) {
+              const match = rawDesc.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (match) img = match[1];
+            }
+            return {
+              title,
+              link,
+              pubDate,
+              description: rawDesc.replace(/<[^>]*>/g, "").trim(),
+              imageUrl: isValidImageUrl(img) ? img : VITRINE_SEM_FOTO,
+            };
+          });
+          setNews(fallbackNews);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+      } catch (fallbackErr: any) {
+        console.error("Todas as fontes de notícias falharam:", fallbackErr.message);
+      }
+      setError("Não conseguimos carregar as notícias no momento. Tente novamente mais tarde.");
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    fetchNews();
     fetchWeather();
 
     // Attempt to autoplay
@@ -753,13 +740,18 @@ export default function App() {
                     className="group bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_36px_rgba(46,21,66,0.12)] hover:-translate-y-1.5 transition-all duration-300 border border-slate-100/80 flex flex-col h-full"
                   >
                     {/* Imagem do Card */}
-                    <div className="w-full h-[220px] overflow-hidden bg-slate-100 shrink-0 relative">
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full h-[220px] overflow-hidden bg-slate-100 shrink-0 relative block group/img"
+                    >
                       <img
                         src={imagem}
                         alt={item.title}
                         loading="lazy"
                         referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
                         onError={(e) => {
                           e.currentTarget.onerror = null;
                           e.currentTarget.src = VITRINE_SEM_FOTO;
@@ -769,15 +761,22 @@ export default function App() {
                       <span className="absolute top-4 right-4 bg-slate-900/75 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider backdrop-blur-md">
                         {new Date(item.pubDate).toLocaleDateString("pt-BR")}
                       </span>
-                    </div>
+                    </a>
 
                     {/* Conteúdo do Card */}
                     <div className="p-[15px] flex-1 flex flex-col justify-between">
                       <div>
                         {/* Título adaptado com cores do site */}
-                        <h2 className="text-xl font-bold text-[#5c3e7b] mb-2 group-hover:text-[#ff3e5e] transition-colors leading-snug line-clamp-2">
-                          {item.title}
-                        </h2>
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block group/title"
+                        >
+                          <h2 className="text-xl font-bold text-[#5c3e7b] mb-2 group-hover/title:text-[#ff3e5e] transition-colors leading-snug line-clamp-2">
+                            {item.title}
+                          </h2>
+                        </a>
                         {/* Descrição limpa */}
                         <p className="text-[#555] text-sm leading-[1.5] mb-4 line-clamp-3">
                           {cleanDesc}
@@ -785,15 +784,15 @@ export default function App() {
                       </div>
 
                       {/* Botão de Link com cores do site adaptadas */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setSelectedNewsUrl(item.link);
-                        }}
-                        className="inline-block bg-[#ff3e5e] hover:bg-[#5c3e7b] text-white px-[15px] py-[10px] text-sm font-bold text-center rounded-[5px] transition-all duration-300 self-start mt-[15px]"
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-[#ff3e5e] hover:bg-[#5c3e7b] text-white px-[15px] py-[10px] text-sm font-bold text-center rounded-[5px] transition-all duration-300 self-start mt-[15px] group/btn"
                       >
-                        Ler Notícia
-                      </button>
+                        <span>Ler Notícia Completa</span>
+                        <ExternalLink className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5" />
+                      </a>
                     </div>
                   </div>
                 );
@@ -1139,11 +1138,15 @@ export default function App() {
                       className="inline-flex items-center gap-2.5 px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 group/partner shadow-sm"
                     >
                       <img
-                        src="https://www.vitrinedosul.com.br/img/f23f14e98b1633ae33c6df8188840cb21436602a.png"
+                        src={VITRINE_LOGO}
                         alt="Portal Vitrine do Sul"
                         loading="lazy"
                         className="h-8 w-auto object-contain transition-transform duration-300 group-hover/partner:scale-105"
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = LOCAL_VITRINE_LOGO;
+                        }}
                       />
                       <div className="flex flex-col text-left">
                         <span className="text-[10px] font-extrabold text-slate-200 group-hover/partner:text-[#fce315] transition-colors leading-none">
