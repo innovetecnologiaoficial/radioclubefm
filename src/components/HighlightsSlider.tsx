@@ -100,43 +100,49 @@ export default function HighlightsSlider() {
   return (
     <section id="cards-destaque" className="max-w-7xl mx-auto px-4 py-8 mb-10">
       {/* Header section with sleek layout and red color accent */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 border-b border-slate-100 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 border-b border-slate-200/80 pb-5">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2.5">
-            <Sparkles className="w-6 h-6 text-[#ff3e5e] animate-pulse" />
-            <span>Destaques e Programação</span>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-black uppercase tracking-widest text-[#ED1C24] bg-[#ED1C24]/10 px-2.5 py-0.5 rounded">
+              Em Destaque
+            </span>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+            Eventos, Prêmios e Novidades
           </h2>
-          <p className="text-slate-500 text-sm mt-1">Fique por dentro de tudo na Clube FM</p>
+          <p className="text-slate-600 text-sm mt-0.5">
+            Acompanhe as principais ações e promoções ativas na rádio
+          </p>
         </div>
         
         {/* Navigation Buttons */}
         <div className="mt-4 sm:mt-0 flex items-center gap-2">
           <button
             onClick={handlePrev}
-            className="w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:text-[#ff3e5e] hover:border-[#ff3e5e] hover:shadow-sm active:scale-95 transition-all cursor-pointer"
+            className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-700 hover:text-[#ED1C24] hover:border-slate-300 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer shadow-sm"
             aria-label="Slide anterior"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <button
             onClick={handleNext}
-            className="w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:text-[#ff3e5e] hover:border-[#ff3e5e] hover:shadow-sm active:scale-95 transition-all cursor-pointer"
+            className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-700 hover:text-[#ED1C24] hover:border-slate-300 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer shadow-sm"
             aria-label="Próximo slide"
           >
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Main slider viewport container - no background fill, transparent, keeping rounded cards */}
+      {/* Main slider viewport container */}
       <div 
         className="relative select-none"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 overflow-hidden py-2 px-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 overflow-hidden py-1">
           {/* Card Left */}
-          <div className="relative overflow-hidden rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-slate-100/60 aspect-[3/2] w-full">
+          <div className="relative overflow-hidden rounded-2xl shadow-sm border border-slate-200/80 bg-slate-100 aspect-[3/2] w-full">
             <AnimatePresence mode="popLayout" custom={direction}>
               <motion.div
                 key={`left-${leftCard.id}`}
@@ -151,14 +157,14 @@ export default function HighlightsSlider() {
                   src={leftCard.url}
                   alt={leftCard.alt}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover select-none hover:scale-[1.01] transition-transform duration-500"
+                  className="w-full h-full object-cover select-none"
                 />
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* Card Right - visible on md and up desktops/tablets */}
-          <div className="hidden md:block relative overflow-hidden rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-slate-100/60 aspect-[3/2] w-full">
+          <div className="hidden md:block relative overflow-hidden rounded-2xl shadow-sm border border-slate-200/80 bg-slate-100 aspect-[3/2] w-full">
             <AnimatePresence mode="popLayout" custom={direction}>
               <motion.div
                 key={`right-${rightCard.id}`}
@@ -173,7 +179,7 @@ export default function HighlightsSlider() {
                   src={rightCard.url}
                   alt={rightCard.alt}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover select-none hover:scale-[1.01] transition-transform duration-500"
+                  className="w-full h-full object-cover select-none"
                 />
               </motion.div>
             </AnimatePresence>

@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+:root {
+  --vermelho: #ED1C24;
+  --amarelo: #FFDD00;
+  --azul: #0047AB;
+  --azul-escuro: #002B70;
+  --branco: #FFFFFF;
+  --cinza-claro: #F5F5F5;
+  --texto: #202124;
+}
+
+
 @keyframes heartbeat {
   0%, 100% {
     transform: scale(1);

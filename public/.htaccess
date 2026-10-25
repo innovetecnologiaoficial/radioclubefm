@@ -1,8 +1,44 @@
+# ----------------------------------------------------------------------
+# Rádio Clube FM Criciúma 87.9 - Configuração Apache / LiteSpeed (cPanel)
+# ----------------------------------------------------------------------
+
+# Ativar reescrita de URLs para Single Page Application (SPA React)
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /index.html [L]
+
+  # Permitir acesso direto a arquivos e pastas reais (css, js, imagens, api-news.php, etc)
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Redirecionar todas as outras URLs para index.html para o roteamento do React
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Charset padrão UTF-8
+AddDefaultCharset UTF-8
+
+# Compressão Deflate / Gzip para carregamento ultra-rápido no cPanel
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/x-javascript application/json application/xml image/svg+xml
+</IfModule>
+
+# Cache de navegador para arquivos estáticos
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 month"
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType application/json "access plus 0 seconds"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/jpg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+</IfModule>
+
+# Segurança e CORS
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
 </IfModule>

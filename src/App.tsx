@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import HighlightsSlider from "./components/HighlightsSlider";
+import ProgramacaoGuide, { getCurrentLiveProgram, ProgramItem } from "./components/ProgramacaoGuide";
 import {
   Play,
   Pause,
@@ -98,6 +99,17 @@ const CLUBE_LOGO = "https://radioclubecriciuma.com/imagens/logoclubepng.png";
 
 export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [liveProgram, setLiveProgram] = useState<ProgramItem>(() => getCurrentLiveProgram());
+
+  // Automatic schedule synchronization every second
+  useEffect(() => {
+    const update = () => setLiveProgram(getCurrentLiveProgram());
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const [isMobileCardOpen, setIsMobileCardOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -347,60 +359,124 @@ export default function App() {
   // In a real scenario, this would be the actual stream URL!
   const STREAM_URL = "https://stream2.svrdedicado.org/8258/stream";
 
+  const parseXmlFeed = (xmlText: string): NewsItem[] => {
+    const itemBlocks = xmlText.split(/<item[\s>]/i).slice(1);
+    return itemBlocks.slice(0, 9).map((block) => {
+      const titleMatch = block.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i);
+      const title = titleMatch ? titleMatch[1].trim() : "";
+
+      const linkMatch = block.match(/<link>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/link>/i);
+      const link = linkMatch ? linkMatch[1].trim() : "";
+
+      const pubDateMatch = block.match(/<pubDate>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/pubDate>/i);
+      const pubDate = pubDateMatch ? pubDateMatch[1].trim() : new Date().toISOString();
+
+      const descMatch = block.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i);
+      const rawDesc = descMatch ? descMatch[1] : "";
+      const cleanDesc = rawDesc.replace(/<[^>]*>/g, "").trim();
+
+      // Extract image: PRIORITY 1: <media:content url="..." />
+      let imageUrl = "";
+      const mediaMatch = block.match(/<media:content[^>]+url=["']([^"']+)["']/i);
+      if (mediaMatch && isValidImageUrl(mediaMatch[1])) {
+        imageUrl = mediaMatch[1];
+      }
+
+      // PRIORITY 2: <enclosure url="..." />
+      if (!imageUrl) {
+        const encMatch = block.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
+        if (encMatch && isValidImageUrl(encMatch[1])) {
+          imageUrl = encMatch[1];
+        }
+      }
+
+      // PRIORITY 3: <img src="..." />
+      if (!imageUrl) {
+        const imgMatch = block.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (imgMatch && isValidImageUrl(imgMatch[1])) {
+          imageUrl = imgMatch[1];
+        }
+      }
+
+      return {
+        title,
+        link,
+        pubDate,
+        description: cleanDesc,
+        imageUrl: imageUrl || VITRINE_SEM_FOTO,
+      };
+    });
+  };
+
   const fetchNews = async () => {
     setLoading(true);
     setError(null);
+
+    // 1. Try PHP endpoint (works natively on shared LiteSpeed/Hostinger/cPanel hosting)
     try {
-      // 1. Fetch via our server endpoint (/api/news) which directly parses the RSS
-      const res = await fetch("/api/news");
-      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setNews(data);
-        setError(null);
-        setLoading(false);
-        return;
-      }
-      throw new Error("Nenhum item retornado do feed");
-    } catch (apiErr: any) {
-      console.warn("API interna de notícias falhou, tentando fallback:", apiErr.message);
-      try {
-        // 2. Fallback via public proxy to RSS xml directly
-        const fallbackRes = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://www.vitrinedosul.com.br/rss.xml"));
-        if (!fallbackRes.ok) throw new Error("Fallback HTTP error");
-        const xmlText = await fallbackRes.text();
-        const xmlDoc = new DOMParser().parseFromString(xmlText, "text/xml");
-        const xmlItems = Array.from(xmlDoc.querySelectorAll("item")).slice(0, 9);
-        if (xmlItems.length > 0) {
-          const fallbackNews = xmlItems.map((el) => {
-            const title = el.querySelector("title")?.textContent || "";
-            const link = el.querySelector("link")?.textContent || "";
-            const pubDate = el.querySelector("pubDate")?.textContent || new Date().toISOString();
-            const rawDesc = el.querySelector("description")?.textContent || "";
-            let img = el.querySelector("enclosure")?.getAttribute("url") || "";
-            if (!img) {
-              const match = rawDesc.match(/<img[^>]+src=["']([^"']+)["']/i);
-              if (match) img = match[1];
-            }
-            return {
-              title,
-              link,
-              pubDate,
-              description: rawDesc.replace(/<[^>]*>/g, "").trim(),
-              imageUrl: isValidImageUrl(img) ? img : VITRINE_SEM_FOTO,
-            };
-          });
-          setNews(fallbackNews);
-          setError(null);
-          setLoading(false);
-          return;
+      const phpRes = await fetch("/api-news.php");
+      if (phpRes.ok) {
+        const contentType = phpRes.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          const data = await phpRes.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setNews(data);
+            setError(null);
+            setLoading(false);
+            return;
+          }
         }
-      } catch (fallbackErr: any) {
-        console.error("Todas as fontes de notícias falharam:", fallbackErr.message);
       }
-      setError("Não conseguimos carregar as notícias no momento. Tente novamente mais tarde.");
-      setLoading(false);
+    } catch (_) {
+      // Continue to next strategy
     }
+
+    // 2. Try Node.js endpoint (/api/news)
+    try {
+      const res = await fetch("/api/news");
+      if (res.ok) {
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setNews(data);
+            setError(null);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+    } catch (_) {
+      // Continue to fallback
+    }
+
+    // 3. Fallback: Direct RSS XML fetch via CORS proxies with media:content parser
+    const proxyUrls = [
+      "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://www.vitrinedosul.com.br/rss.xml"),
+      "https://corsproxy.io/?" + encodeURIComponent("https://www.vitrinedosul.com.br/rss.xml")
+    ];
+
+    for (const proxyUrl of proxyUrls) {
+      try {
+        const response = await fetch(proxyUrl);
+        if (!response.ok) continue;
+        const xmlText = await response.text();
+        if (xmlText && xmlText.includes("<item")) {
+          const parsed = parseXmlFeed(xmlText);
+          if (parsed.length > 0) {
+            setNews(parsed);
+            setError(null);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Proxy RSS falhou:", proxyUrl, err);
+      }
+    }
+
+    setError("Não conseguimos carregar as notícias no momento. Tente novamente mais tarde.");
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -435,83 +511,49 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
       {/* Main Content */}
       <main className="flex-1 pb-24 md:pb-16">
-        {/* Hero Section / Player */}
-        <section className="relative text-white flex flex-col items-center justify-center overflow-hidden min-h-[50vh] py-6 md:py-10">
-          {/* YouTube Video Background */}
-          <div className="absolute inset-0 w-full h-full pointer-events-none bg-[#663b86] z-0 overflow-hidden">
-            <iframe
-              src="https://www.youtube.com/embed/GQ-2GJbU9P4?autoplay=1&mute=1&loop=1&controls=0&disablekb=1&playsinline=1&playlist=GQ-2GJbU9P4&modestbranding=1&rel=0&iv_load_policy=3"
-              className="absolute top-1/2 left-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] transform -translate-x-1/2 -translate-y-1/2 scale-[1.3] md:scale-[1.5] opacity-50 mix-blend-overlay"
-              allow="autoplay; encrypted-media"
-              loading="lazy"
-            ></iframe>
-            {/* Color Overlay & Fade out */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#663b86]/95 via-[#663b86]/80 to-[#ff3e5e]/80"></div>
-            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-50 to-transparent"></div>
+        {/* Hero Section / Broadcast Masthead */}
+        <section className="relative text-white overflow-hidden bg-slate-900">
+          {/* Studio Image - High Clarity, Warmth & Color */}
+          <div className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
+            <img
+              src="https://radioclubecriciuma.com/imagens/estudio.jpeg"
+              alt="Estúdio Rádio Clube FM Criciúma"
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-100 brightness-105 saturate-[1.1]"
+            />
+            {/* Top & Overlay Tint for Studio Ambiance */}
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/30 to-slate-950/80"></div>
+            {/* Soft Bottom Fade */}
+            <div className="absolute inset-x-0 bottom-0 h-32 sm:h-44 pointer-events-none bg-gradient-to-t from-slate-50 via-slate-50/80 to-transparent"></div>
           </div>
 
-          <div className="max-w-5xl mx-auto text-center space-y-3 relative z-10 w-full px-4 sm:px-6 flex flex-col items-center">
-            {/* Grand Centerpiece Official Logo with Interactive Play */}
-            <div className="w-full flex flex-col items-center justify-center my-2 sm:my-3 pt-3 sm:pt-5 md:pt-6 relative">
-              {/* Giant ambient colorful radial glow */}
-              <div className="absolute w-[85vw] max-w-[320px] h-[85vw] max-h-[320px] bg-gradient-to-tr from-[#fce315]/35 via-[#ff3e5e]/30 to-[#fce315]/20 rounded-full blur-[90px] pointer-events-none -z-10 animate-pulse"></div>
-
-              {/* Logo Oficial Clube FM - Centralizada e Interativa */}
-              <div
-                onClick={togglePlay}
-                className="relative group cursor-pointer transition-all duration-500 hover:scale-105 active:scale-95 flex flex-col items-center"
-                title={isPlaying ? "Clique para pausar" : "Clique para ouvir ao vivo"}
-              >
-                <div className="relative">
-                  {/* Halo luminoso ao tocar */}
-                  {isPlaying && (
-                    <div className="absolute -inset-4 rounded-full bg-[#fce315]/30 blur-xl animate-pulse pointer-events-none"></div>
-                  )}
-
-                  <img
-                    src={CLUBE_LOGO}
-                    alt="Rádio Clube FM Criciúma 87.9"
-                    fetchPriority="high"
-                    loading="eager"
-                    className={`h-28 sm:h-32 md:h-40 lg:h-48 w-auto max-w-[90vw] object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.65)] transition-transform duration-500 ${
-                      isPlaying ? "animate-heartbeat" : ""
-                    }`}
-                  />
-                </div>
-              </div>
+          {/* Hero Content */}
+          <div className="max-w-5xl mx-auto relative z-10 w-full px-4 sm:px-6 pt-10 pb-16 flex flex-col items-center text-center">
+            {/* Station Logo */}
+            <div className="mb-6 flex flex-col items-center">
+              <img
+                src={CLUBE_LOGO}
+                alt="Rádio Clube FM Criciúma 87.9"
+                fetchPriority="high"
+                loading="eager"
+                className="h-28 sm:h-36 md:h-44 w-auto max-w-[85vw] object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.8)] transition-transform duration-300 hover:scale-102"
+              />
             </div>
 
-            <h1
-              className="text-3xl sm:text-4xl md:text-5xl font-[900] tracking-tight drop-shadow-2xl"
-              style={{ textShadow: "0 8px 15px rgba(0,0,0,0.5)" }}
-            >
-              A sua rádio favorita em Criciúma!
-            </h1>
-
-            <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium drop-shadow-md pb-2 sm:pb-4">
-              A Rádio Clube FM Criciúma leva até você a melhor programação de
-              Santa Catarina. Sucessos, prêmios e muita alegria o dia todo!
-            </p>
-
-            <button
-              onClick={togglePlay}
-              className="mt-2 md:mt-4 relative inline-flex items-center justify-center group w-[90%] sm:w-auto cursor-pointer"
-            >
-              <div className="absolute inset-0 bg-[#fce315]/30 rounded-full animate-ping group-hover:bg-[#fce315]/40 transition-all duration-300"></div>
-              <div className="relative bg-[#fce315] text-[#663b86] group-hover:bg-[#ffe83b] group-hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-3 pr-8 pl-6 py-4 md:pr-10 md:pl-8 md:py-5 rounded-full shadow-2xl font-[900] text-base md:text-xl uppercase tracking-wider w-full">
-                {isPlaying ? (
-                  <>
-                    <Pause className="w-6 h-6 md:w-8 md:h-8 fill-current shrink-0" />
-                    <span>Pausar Rádio</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-6 h-6 md:w-8 md:h-8 fill-current shrink-0" />
-                    <span>Ouvir ao Vivo</span>
-                  </>
-                )}
-              </div>
-            </button>
+            {/* Transparent Glassmorphic Container for Headline */}
+            <div className="bg-black/25 backdrop-blur-md border border-white/25 p-6 sm:p-8 rounded-3xl max-w-2xl mx-auto shadow-2xl space-y-3">
+              <h1
+                className="text-3xl sm:text-4xl md:text-5xl font-[1000] tracking-tight text-white leading-tight"
+                style={{ textShadow: "0 3px 10px rgba(0, 0, 0, 0.9)" }}
+              >
+                A rádio favorita de Criciúma
+              </h1>
+              <p
+                className="text-white text-sm sm:text-base md:text-lg font-bold leading-relaxed"
+                style={{ textShadow: "0 2px 8px rgba(0, 0, 0, 0.9)" }}
+              >
+                Grandes sucessos da música, jornalismo em tempo real, prêmios diários e a maior audiência da região. Sintonize 87.9 FM ou ouça online.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -523,154 +565,193 @@ export default function App() {
         {/* App Download Section */}
         <section
           id="app"
-          className="max-w-5xl mx-auto px-4 py-16 md:py-24 mb-12"
+          className="max-w-7xl mx-auto px-4 py-12 mb-8"
         >
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#5c337c] via-[#713172] to-[#ff3e5e] px-8 py-16 md:py-20 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 min-h-[420px] group">
-            {/* Background Image Overlay */}
-            <div className="absolute inset-0 bg-[url('https://radioclubecriciuma.com/imagens/estudioclubefm.png')] bg-cover bg-center opacity-15 mix-blend-luminosity transition-transform duration-700 group-hover:scale-105 z-0"></div>
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-slate-50 to-purple-50/50 text-slate-900 p-8 md:p-12 border border-slate-200/90 shadow-xl">
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-12">
+              {/* Left Content */}
+              <div className="max-w-2xl text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-[#663b86]/10 border border-[#663b86]/20 rounded-full text-xs font-black text-[#663b86] uppercase tracking-wider mb-4">
+                  <span>Aplicativo Oficial</span>
+                  <span>•</span>
+                  <span>iOS & Android</span>
+                </div>
 
-            {/* Background Decorations */}
-            <div className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-white/10 rounded-full blur-3xl"></div>
-            <div className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-[20rem] h-[20rem] bg-[#fce315]/20 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-[25rem] h-[25rem] bg-[#fce315]/10 rounded-full blur-3xl"></div>
+                <h2 className="text-3xl sm:text-4xl font-[950] text-slate-900 leading-tight tracking-tight mb-4">
+                  Leve a Clube FM no seu bolso
+                </h2>
 
-            {/* Content Left Side */}
-            <div className="relative z-10 max-w-xl flex flex-col items-center md:items-start text-center md:text-left w-full md:w-7/12">
-              <h2 className="text-3xl sm:text-4xl md:text-[40px] font-[900] text-white leading-[1.2] mb-5 tracking-tight drop-shadow-sm">
-                Leve a nossa energia <br />
-                <span className="text-[#fce315]">no seu bolso.</span>
-              </h2>
+                <p className="text-slate-600 text-sm sm:text-base leading-relaxed mb-8 max-w-xl font-medium">
+                  Baixe gratuitamente o aplicativo oficial da Rádio Clube FM Criciúma. Ouça a programação ao vivo com qualidade digital HD, peça suas músicas favoritas e participe de todas as promoções onde quer que você esteja.
+                </p>
 
-              <p className="text-white/95 text-sm md:text-base leading-relaxed mb-8 max-w-lg font-medium drop-shadow-sm">
-                Ondas de alegria direto no seu smartphone. Baixe o App da Rádio
-                Clube FM Criciúma e acompanhe a melhor rádio onde quer que você
-                vá!
-              </p>
+                <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
+                  <a
+                    href="https://apps.apple.com/us/app/r%C3%A1dio-clube-crici%C3%BAma/id6777545744"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-98"
+                  >
+                    <AppleIcon className="w-6 h-6 text-white" />
+                    <div className="flex flex-col items-start leading-none text-left">
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                        Baixar na
+                      </span>
+                      <span className="text-white font-black text-sm tracking-tight">
+                        App Store
+                      </span>
+                    </div>
+                  </a>
 
-              <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4 w-full sm:w-auto">
-                <a
-                  href="https://apps.apple.com/us/app/r%C3%A1dio-clube-crici%C3%BAma/id6777545744"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative overflow-hidden flex items-center justify-center space-x-3 px-8 py-4 bg-white hover:bg-gray-50 rounded-2xl transition-all duration-300 w-full sm:w-[210px] shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:-translate-y-1"
-                >
-                  <AppleIcon className="w-7 h-7 text-[#1d1d1f] group-hover:scale-110 transition-transform duration-300" />
-                  <div className="flex flex-col items-start pt-0.5">
-                    <span className="text-[10px] font-bold text-gray-500 tracking-wider leading-none mb-1 uppercase">
-                      Baixar na
-                    </span>
-                    <span className="text-[#1d1d1f] font-black text-[15px] tracking-wide leading-none">
-                      App Store
+                  <a
+                    href="https://play.google.com/store/apps/details?id=br.com.radioclubecriciuma"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-98"
+                  >
+                    <PlayStoreIcon className="w-5 h-5 text-white" />
+                    <div className="flex flex-col items-start leading-none text-left">
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                        Disponível no
+                      </span>
+                      <span className="text-white font-black text-sm tracking-tight">
+                        Google Play
+                      </span>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
+              {/* Official Station Mascot */}
+              <div className="hidden lg:flex items-center justify-center shrink-0 -my-6 self-end">
+                <img
+                  src="https://radioclubecriciuma.com/imagens/mascote.png"
+                  alt="Mascote Clube FM Criciúma"
+                  className="h-52 xl:h-60 w-auto object-contain drop-shadow-2xl transition-transform duration-300 hover:scale-105 select-none"
+                />
+              </div>
+
+              {/* Right Feature Highlights */}
+              <div className="w-full lg:w-80 shrink-0 bg-white rounded-xl p-6 border border-slate-200 text-sm space-y-4 shadow-sm">
+                <h3 className="font-black text-slate-900 text-xs uppercase tracking-wider text-slate-500">
+                  Vantagens do App
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 font-black text-xs">
+                      ✓
+                    </div>
+                    <span className="text-slate-700 font-medium text-xs leading-relaxed">
+                      Transmissão 24h sem cortes com áudio em alta definição
                     </span>
                   </div>
-                </a>
-
-                <a
-                  href="https://play.google.com/store/apps/details?id=br.com.radioclubecriciuma"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative overflow-hidden flex items-center justify-center space-x-4 px-8 py-4 bg-white hover:bg-gray-50 rounded-2xl transition-all duration-300 w-full sm:w-[210px] shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:-translate-y-1"
-                >
-                  <PlayStoreIcon className="w-6 h-6 text-[#1d1d1f] group-hover:scale-110 transition-transform duration-300" />
-                  <div className="flex flex-col items-start pt-0.5">
-                    <span className="text-[10px] font-bold text-gray-500 tracking-wider leading-none mb-1 uppercase">
-                      Disponível no
-                    </span>
-                    <span className="text-[#1d1d1f] font-black text-[15px] tracking-wide leading-none">
-                      Google Play
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 font-black text-xs">
+                      ✓
+                    </div>
+                    <span className="text-slate-700 font-medium text-xs leading-relaxed">
+                      Acesso rápido para pedir música diretamente no WhatsApp
                     </span>
                   </div>
-                </a>
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 font-black text-xs">
+                      ✓
+                    </div>
+                    <span className="text-slate-700 font-medium text-xs leading-relaxed">
+                      Notificações exclusivas de sorteios, prêmios e shows
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Previsão do Tempo Criciúma Section */}
-        <section id="previsao" className="max-w-7xl mx-auto px-4 pt-12 -mb-8">
-          <div className="bg-gradient-to-r from-[#5c337c]/5 to-[#ff3e5e]/5 border border-slate-100 rounded-[2.5rem] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_10px_30px_rgba(46,21,66,0.03)] backdrop-blur-3xl relative overflow-hidden">
-            {/* Background absolute decor glow */}
-            <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-[#fce315]/10 rounded-full blur-3xl pointer-events-none"></div>
+        {/* Grade de Programação Estilo EPG / Streaming Guide */}
+        <ProgramacaoGuide isPlaying={isPlaying} onTogglePlay={togglePlay} />
 
-            <div className="flex flex-col sm:flex-row items-center gap-6 z-10 w-full md:w-auto">
-              {/* Thermometer / Condition circular highlight */}
-              <div className="flex items-center justify-center shrink-0 select-none">
+        {/* Previsão do Tempo Criciúma Section */}
+        <section id="previsao" className="max-w-7xl mx-auto px-4 pt-10 pb-4">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left w-full md:w-auto">
+              {/* Weather icon */}
+              <div className="flex items-center justify-center shrink-0 select-none p-3 bg-slate-50 border border-slate-100 rounded-xl">
                 {weather ? (
                   renderWeatherIcon(
                     getWeatherCondition(weather.code).icon,
-                    "w-14 h-14 drop-shadow-sm",
+                    "w-10 h-10 drop-shadow-sm",
                   )
                 ) : (
-                  <Sun className="w-14 h-14 text-amber-500 animate-spin [animation-duration:20s]" />
+                  <Sun className="w-10 h-10 text-amber-500 animate-spin [animation-duration:20s]" />
                 )}
               </div>
 
-              <div className="text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-2.5">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#5c337c]/10 text-[#5c337c] text-xs font-extrabold rounded-full tracking-wider uppercase">
-                    Clima Criciúma
+              <div>
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-slate-100 text-slate-700 text-xs font-bold rounded">
+                    Clima Criciúma / SC
                   </span>
-                  <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  <span className="flex items-center gap-1 text-[11px] text-slate-500 font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Tempo Real
                   </span>
                 </div>
-                <h3 className="text-xl md:text-2xl font-black text-slate-800 mt-2 tracking-tight">
-                  Estação de Monitoramento
+                <h3 className="text-lg md:text-xl font-black text-slate-900 mt-1 tracking-tight">
+                  Estação Meteorológica Regional
                 </h3>
-                <p className="text-sm text-slate-500 font-medium mt-0.5">
-                  Informações meteorológicas em tempo real para a região
-                  carbonífera
+                <p className="text-xs text-slate-500 font-medium">
+                  Informações meteorológicas para Criciúma e Região Carbonífera
                 </p>
               </div>
             </div>
 
-            {/* Weather values card */}
-            <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 sm:gap-6 w-full md:w-auto z-10">
+            {/* Weather values */}
+            <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 sm:gap-4 w-full md:w-auto">
               {weatherLoading ? (
-                <div className="flex items-center gap-3 py-4 px-6 bg-white rounded-3xl shadow-sm border border-slate-100">
-                  <div className="w-6 h-6 rounded-full border-2 border-slate-200 border-t-[#ff3e5e] animate-spin"></div>
-                  <span className="text-sm font-semibold text-slate-500 font-medium">
-                    Buscando temperatura atual...
-                  </span>
+                <div className="flex items-center gap-2 py-3 px-4 bg-slate-50 rounded-xl border border-slate-200 text-xs font-semibold text-slate-500">
+                  <div className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-[#ff3e5e] animate-spin"></div>
+                  <span>Atualizando dados do tempo...</span>
                 </div>
               ) : weather ? (
                 <>
-                  {/* Temp Main Badge */}
-                  <div className="bg-white hover:bg-slate-50/50 hover:scale-102 transition-all duration-300 p-4 px-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-                    <div className="text-right">
-                      <span className="text-3xl sm:text-4xl font-black text-[#ff3e5e] leading-none select-none tracking-tighter">
+                  {/* Temperature Pill */}
+                  <div className="bg-slate-50 px-4 py-3 rounded-xl border border-slate-200/80 flex items-center gap-3">
+                    <div>
+                      <span className="text-2xl sm:text-3xl font-black text-[#ff3e5e] tracking-tight">
                         {weather.temp}°C
                       </span>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase mt-0.5">
-                        Criciúma SC
-                      </p>
                     </div>
-                    <div className="h-8 w-[1px] bg-slate-100"></div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-extrabold text-slate-800">
-                          {getWeatherCondition(weather.code).text}
-                        </span>
+                    <div className="h-6 w-[1px] bg-slate-200"></div>
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-slate-800">
+                        {getWeatherCondition(weather.code).text}
                       </div>
-                      <div className="text-[11px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
-                        <Thermometer className="w-3.5 h-3.5 text-slate-400" />
-                        Sensação:{" "}
-                        <span className="text-slate-700 font-bold">
-                          {weather.apparentTemp}°C
-                        </span>
+                      <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                        <Thermometer className="w-3 h-3 text-slate-400" />
+                        Sensação: <span className="font-bold text-slate-700">{weather.apparentTemp}°C</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Humidity Info Badge */}
-                  <div className="bg-white/80 p-4 px-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-center gap-1 min-w-[120px] text-center sm:text-left">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-center sm:justify-start gap-1">
-                      <Droplets className="w-3.5 h-3.5 text-sky-400" />
+                  {/* Humidity Pill */}
+                  <div className="bg-slate-50 px-4 py-3 rounded-xl border border-slate-200/80 flex flex-col justify-center text-left min-w-[100px]">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      <Droplets className="w-3 h-3 text-sky-500" />
                       Umidade
                     </span>
-                    <span className="text-lg font-extrabold text-slate-800 tracking-tight mt-0.5">
+                    <span className="text-sm font-black text-slate-800 mt-0.5">
                       {weather.humidity}%
+                    </span>
+                  </div>
+
+                  {/* Wind Pill */}
+                  <div className="bg-slate-50 px-4 py-3 rounded-xl border border-slate-200/80 flex flex-col justify-center text-left min-w-[100px]">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      <Wind className="w-3 h-3 text-slate-500" />
+                      Vento
+                    </span>
+                    <span className="text-sm font-black text-slate-800 mt-0.5">
+                      {weather.windSpeed} km/h
                     </span>
                   </div>
 
@@ -678,11 +759,12 @@ export default function App() {
                   <button
                     onClick={fetchWeather}
                     disabled={isRefreshingWeather}
-                    className="w-12 h-12 rounded-2xl bg-white hover:bg-slate-50 text-slate-400 hover:text-[#ff3e5e] flex items-center justify-center border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all group cursor-pointer"
-                    title="Atualizar Clima"
+                    className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center border border-slate-200 transition-colors cursor-pointer"
+                    title="Atualizar dados climáticos"
+                    aria-label="Atualizar dados climáticos"
                   >
                     <RefreshCw
-                      className={`w-5 h-5 ${isRefreshingWeather ? "animate-spin text-[#ff3e5e]" : "group-hover:rotate-180 transition-transform duration-500"}`}
+                      className={`w-4 h-4 ${isRefreshingWeather ? "animate-spin text-[#ff3e5e]" : ""}`}
                     />
                   </button>
                 </>
@@ -691,362 +773,441 @@ export default function App() {
           </div>
         </section>
 
-        {/* Portal Vitrine do Sul - RSS News */}
-        <section id="noticias" className="max-w-7xl mx-auto px-4 py-16">
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-12">
+        {/* Portal Vitrine do Sul - Editorial News Section */}
+        <section id="noticias" className="max-w-7xl mx-auto px-4 py-12">
+          {/* Editorial Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 border-b border-slate-200/80 pb-5">
             <div>
-              <h2 className="text-[32px] md:text-[40px] font-black text-[#5c3e7b] flex items-center space-x-3 tracking-tight">
-                <Radio className="w-8 h-8 text-[#ff3e5e]" strokeWidth={2.5} />
-                <span>Notícias da Clube FM Criciúma</span>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-black uppercase tracking-widest text-[#ff3e5e] bg-[#ff3e5e]/10 px-2.5 py-0.5 rounded">
+                  Jornalismo Regional
+                </span>
+                <span className="text-slate-400 text-xs">•</span>
+                <span className="text-slate-500 text-xs font-semibold">Criciúma & Sul Catarinense</span>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                Notícias do Portal Vitrine do Sul
               </h2>
-              <div className="w-16 h-1 bg-[#ff3e5e] mt-3"></div>
+              <p className="text-slate-600 text-sm mt-0.5">
+                Cobertura diária dos principais acontecimentos com credibilidade e apuração local
+              </p>
             </div>
+
             <a
               href="https://www.vitrinedosul.com.br"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 sm:mt-0 text-sm font-bold text-slate-500 hover:text-[#ff3e5e] transition-colors flex items-center space-x-1 group uppercase tracking-wider"
+              className="mt-4 sm:mt-0 text-xs font-bold text-slate-700 hover:text-[#ff3e5e] transition-colors flex items-center gap-1.5 uppercase tracking-wider group"
             >
-              <span>Informação com Credibilidade</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <span>Acessar portal completo</span>
+              <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </a>
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-24">
-              <div className="animate-spin rounded-full h-14 w-14 border-b-[3px] border-[#ff3e5e]"></div>
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+              <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-200 border-t-[#ff3e5e]"></div>
+              <span className="text-xs font-semibold uppercase tracking-wider">Carregando notícias da redação...</span>
             </div>
           ) : error ? (
-            <div className="bg-red-50 text-red-700 p-8 rounded-3xl flex items-center space-x-4 border border-red-100">
-              <ShieldAlert className="w-8 h-8 flex-shrink-0" />
-              <p className="font-medium text-lg">
-                Não conseguimos carregar as notícias no momento. Tente novamente
-                mais tarde.
+            <div className="bg-amber-50 text-amber-800 p-6 rounded-xl flex items-center gap-4 border border-amber-200/80">
+              <ShieldAlert className="w-6 h-6 flex-shrink-0 text-amber-600" />
+              <p className="text-sm font-medium">
+                Não conseguimos atualizar o feed de notícias neste instante. Acesse diretamente o{" "}
+                <a
+                  href="https://www.vitrinedosul.com.br"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold underline hover:text-amber-900"
+                >
+                  Portal Vitrine do Sul
+                </a>
+                .
               </p>
             </div>
           ) : news.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {news.map((item, idx) => {
-                const imagem = item.imageUrl || VITRINE_SEM_FOTO;
-                
-                // Remove HTML da descrição de forma limpa
-                const cleanDesc = item.description
-                  ? item.description.replace(/<[^>]*>/g, "").substring(0, 180) + "..."
-                  : "";
-
-                return (
-                  <div
-                    key={idx}
-                    className="group bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_36px_rgba(46,21,66,0.12)] hover:-translate-y-1.5 transition-all duration-300 border border-slate-100/80 flex flex-col h-full"
-                  >
-                    {/* Imagem do Card */}
+            <div className="space-y-8">
+              {/* Lead Feature Story (First Item) */}
+              {news[0] && (
+                <article className="group bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
                     <a
-                      href={item.link}
+                      href={news[0].link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full h-[220px] overflow-hidden bg-slate-100 shrink-0 relative block group/img"
+                      className="lg:col-span-7 aspect-[16/10] sm:aspect-[16/9] lg:aspect-auto overflow-hidden bg-slate-100 relative block"
                     >
                       <img
-                        src={imagem}
-                        alt={item.title}
+                        src={news[0].imageUrl || VITRINE_SEM_FOTO}
+                        alt={news[0].title}
                         loading="lazy"
                         referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
                         onError={(e) => {
                           e.currentTarget.onerror = null;
                           e.currentTarget.src = VITRINE_SEM_FOTO;
                         }}
                       />
-                      {/* Badge de Data */}
-                      <span className="absolute top-4 right-4 bg-slate-900/75 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider backdrop-blur-md">
-                        {new Date(item.pubDate).toLocaleDateString("pt-BR")}
+                      <span className="absolute top-4 left-4 bg-slate-900/85 text-white text-[10px] font-bold uppercase px-3 py-1 rounded backdrop-blur-sm">
+                        Destaque da Redação
                       </span>
                     </a>
 
-                    {/* Conteúdo do Card */}
-                    <div className="p-[15px] flex-1 flex flex-col justify-between">
+                    <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between">
                       <div>
-                        {/* Título adaptado com cores do site */}
+                        <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+                          <span className="font-bold text-[#ff3e5e] uppercase tracking-wider text-[11px]">
+                            Vitrine do Sul
+                          </span>
+                          <span>•</span>
+                          <span>{new Date(news[0].pubDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</span>
+                        </div>
+
+                        <a
+                          href={news[0].link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <h3 className="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-[#ff3e5e] transition-colors leading-tight mb-3">
+                            {news[0].title}
+                          </h3>
+                        </a>
+
+                        <p className="text-slate-600 text-sm leading-relaxed line-clamp-3 mb-6">
+                          {news[0].description
+                            ? news[0].description.replace(/<[^>]*>/g, "").substring(0, 220) + "..."
+                            : ""}
+                        </p>
+                      </div>
+
+                      <div>
+                        <a
+                          href={news[0].link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-[#ff3e5e] text-white text-xs font-black uppercase tracking-wider rounded-lg transition-colors"
+                        >
+                          <span>Ler Matéria Completa</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              )}
+
+              {/* Secondary Stories Grid */}
+              {news.length > 1 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {news.slice(1, 7).map((item, idx) => {
+                    const imagem = item.imageUrl || VITRINE_SEM_FOTO;
+                    const cleanDesc = item.description
+                      ? item.description.replace(/<[^>]*>/g, "").substring(0, 140) + "..."
+                      : "";
+
+                    return (
+                      <article
+                        key={idx}
+                        className="group bg-white rounded-xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col h-full"
+                      >
                         <a
                           href={item.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block group/title"
+                          className="w-full aspect-[16/10] overflow-hidden bg-slate-100 relative block shrink-0"
                         >
-                          <h2 className="text-xl font-bold text-[#5c3e7b] mb-2 group-hover/title:text-[#ff3e5e] transition-colors leading-snug line-clamp-2">
-                            {item.title}
-                          </h2>
+                          <img
+                            src={imagem}
+                            alt={item.title}
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = VITRINE_SEM_FOTO;
+                            }}
+                          />
+                          <span className="absolute bottom-2.5 right-2.5 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">
+                            {new Date(item.pubDate).toLocaleDateString("pt-BR")}
+                          </span>
                         </a>
-                        {/* Descrição limpa */}
-                        <p className="text-[#555] text-sm leading-[1.5] mb-4 line-clamp-3">
-                          {cleanDesc}
-                        </p>
-                      </div>
 
-                      {/* Botão de Link com cores do site adaptadas */}
-                      <a
-                        href={item.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-[#ff3e5e] hover:bg-[#5c3e7b] text-white px-[15px] py-[10px] text-sm font-bold text-center rounded-[5px] transition-all duration-300 self-start mt-[15px] group/btn"
-                      >
-                        <span>Ler Notícia Completa</span>
-                        <ExternalLink className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5" />
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
+                        <div className="p-5 flex-1 flex flex-col justify-between">
+                          <div>
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-[#ff3e5e] mb-2">
+                              Notícia Local
+                            </div>
+
+                            <a
+                              href={item.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
+                              <h4 className="text-base font-bold text-slate-900 group-hover:text-[#ff3e5e] transition-colors leading-snug line-clamp-2 mb-2">
+                                {item.title}
+                              </h4>
+                            </a>
+
+                            <p className="text-slate-600 text-xs leading-relaxed line-clamp-2 mb-4">
+                              {cleanDesc}
+                            </p>
+                          </div>
+
+                          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
+                            <span className="text-slate-400 text-[11px]">Portal Vitrine do Sul</span>
+                            <a
+                              href={item.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-slate-900 group-hover:text-[#ff3e5e] transition-colors inline-flex items-center gap-1 text-xs font-bold"
+                            >
+                              <span>Acessar</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : null}
         </section>
       </main>
 
-      {/* Fully Responsive Audio Player System */}
-      {/* Mobile/Tablet Bottom Sticky Bar (displays only on screens < md) */}
-      <div className="fixed bottom-0 inset-x-0 w-full md:hidden bg-gradient-to-r from-[#4b2766]/98 to-[#2e1542]/98 backdrop-blur-xl border-t border-white/15 px-4 py-3.5 z-[60] flex items-center justify-between shadow-[0_-12px_30px_rgba(0,0,0,0.4)]">
-        {/* Left: Radio identifier with heartbeat logo */}
-        <div className="flex items-center gap-2.5">
+      {/* Mobile Versatile Floating Player Capsule (Accompany navigation smoothly, same colors and style) */}
+      <div className="md:hidden fixed bottom-3 inset-x-3 z-[60] bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.18)] border border-slate-200/90 p-2 sm:p-2.5 flex items-center justify-between gap-2.5 select-none transition-all">
+        {/* Left: Tappable Show Avatar & Titles -> opens full show card */}
+        <div
+          onClick={() => setIsMobileCardOpen(true)}
+          className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer active:opacity-80"
+          title="Toque para ver o card completo do programa"
+        >
           <div className="relative shrink-0">
-            <div
-              className={`absolute -inset-1 bg-[#ff3e5e]/30 blur-sm rounded-full transition-opacity ${isPlaying ? "opacity-100" : "opacity-0"}`}
-            ></div>
             <img
-              src={CLUBE_LOGO}
-              alt="Clube FM Logo"
-              loading="lazy"
-              className={`w-11 h-11 object-contain relative z-10 ${isPlaying ? "animate-heartbeat" : ""}`}
+              src={liveProgram.cardBgImage || CLUBE_LOGO}
+              alt={liveProgram.title}
+              className="w-11 h-11 rounded-xl object-cover border border-slate-100 shadow-sm"
             />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[11px] font-black tracking-widest text-[#fce315] uppercase select-none leading-none">
-              Clube FM
+            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-white rounded-full flex items-center justify-center shadow-xs border border-slate-200">
+              <ChevronUp className="w-2.5 h-2.5 text-slate-600" />
             </span>
-            <div className="flex items-center gap-1 mt-0.5">
-              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 relative">
-                <span
-                  className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 ${isPlaying ? "" : "hidden"}`}
-                ></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-              </span>
-              <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">
-                Ao Vivo
-              </span>
-            </div>
+          </div>
+
+          <div className="flex flex-col text-left min-w-0">
+            <span className="text-[10px] font-black tracking-wide text-amber-600 uppercase leading-none truncate">
+              {liveProgram.host ? liveProgram.host : "NO AR AGORA"}
+            </span>
+            <span className="font-[1000] text-xs text-slate-900 leading-snug truncate mt-0.5">
+              {liveProgram.title}
+            </span>
           </div>
         </div>
 
-        {/* Center: Play/Pause trigger */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        {/* Right: Same Red Live Dot + Purple 87.9 FM + Red Play/Pause Button */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex flex-col text-right leading-none">
+            <div className="flex items-center justify-end gap-1 text-[10px] font-extrabold text-[#ff3e5e] uppercase">
+              <span className={`w-2 h-2 rounded-full ${isPlaying ? "bg-[#ff3e5e] animate-pulse" : "bg-slate-400"}`}></span>
+              <span>AO VIVO</span>
+            </div>
+            <span className="text-[#4b2766] font-[1000] text-base leading-none mt-1">
+              87.9 FM
+            </span>
+          </div>
+
           <button
             onClick={togglePlay}
-            className="w-12 h-12 bg-gradient-to-tr from-[#ff3e5e] to-[#ff7a8e] rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all text-white focus:outline-none"
-            title={isPlaying ? "Pausar rádio" : "Ouvir ao vivo"}
+            className="w-12 h-12 rounded-full bg-[#ff3e5e] hover:bg-[#e62e4e] text-white flex items-center justify-center shadow-lg ring-4 ring-[#ff3e5e]/25 active:scale-95 transition-all cursor-pointer shrink-0"
+            title={isPlaying ? "Pausar transmissão" : "Ouvir rádio ao vivo"}
+            aria-label={isPlaying ? "Pausar transmissão" : "Ouvir rádio ao vivo"}
           >
             {isPlaying ? (
-              <Pause className="w-5 h-5 fill-white" />
+              <Pause className="w-5 h-5 fill-current" />
             ) : (
-              <Play className="w-5 h-5 fill-white ml-0.5" />
+              <Play className="w-5 h-5 fill-current ml-0.5" />
             )}
           </button>
-        </div>
-
-        {/* Right: Mute toggle & WhatsApp link */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 border border-white/5 text-white/80 active:scale-90 transition-all"
-            title={isMuted ? "Ativar som" : "Desativar som"}
-          >
-            {isMuted || volume === 0 ? (
-              <VolumeX className="w-4.5 h-4.5 text-[#ff3e5e]" />
-            ) : (
-              <Volume2
-                className={`w-4.5 h-4.5 ${isPlaying ? "text-[#fce315]" : ""}`}
-              />
-            )}
-          </button>
-
-          <a
-            href="https://wa.me/5548991950093"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-gradient-to-tr from-[#128C7E] to-[#25D366] w-9 h-9 rounded-full flex items-center justify-center border border-white/10 active:scale-95 transition-all shadow-md"
-            title="WhatsApp Clube"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="white"
-              className="w-4.5 h-4.5"
-            >
-              <path d="M12.031 0A12 12 0 0 0 0 12c0 2.115.553 4.108 1.542 5.867L.18 23.518l5.807-1.514A11.972 11.972 0 0 0 12.031 24c6.627 0 12-5.373 12-12s-5.373-12-12-12zm6.657 17.15c-.279.79-1.343 1.517-2.072 1.637-.73.12-1.748.337-5.597-1.258-4.63-1.92-7.653-6.666-7.882-6.974-.23-.307-1.884-2.508-1.884-4.786s1.173-3.398 1.583-3.834c.41-.437.892-.547 1.19-.547.297 0 .596.012.86.026.275.014.646-.107.994.733.364.876 1.19 2.909 1.295 3.126.107.218.18.472.046.732-.132.261-.202.424-.4.636-.2.21-.418.468-.598.648-.198.196-.407.411-.18 2.015.632 1.748 1.83 2.998 3.018 3.996C14.07 15.358 14.887 15.228 15.118 14.935c.23-.294 1.01-1.178 1.288-1.582.277-.405.553-.338.92-.203.367.135 2.327 1.096 2.723 1.294.397.198.66.297.755.462.097.165.097.962-.182 1.75z" />
-            </svg>
-          </a>
         </div>
       </div>
 
-      {/* Desktop Side Fixed Player (hidden on mobile, visible on md+) */}
-      <div className="hidden md:block fixed right-6 top-1/2 -translate-y-1/2 w-auto z-[60]">
-        {/* Glow effect behind player */}
+      {/* Mobile Expanded Full Card Modal (Opened on tapping show thumbnail) */}
+      {isMobileCardOpen && (
         <div
-          className={`absolute inset-0 bg-[#ff3e5e]/20 blur-2xl rounded-full transition-opacity duration-1000 ${isPlaying ? "opacity-100" : "opacity-0"}`}
-        ></div>
+          onClick={() => setIsMobileCardOpen(false)}
+          className="md:hidden fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-72 max-w-[85vw] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 select-none animate-in zoom-in-95 duration-200"
+          >
+            {/* Top: Show Poster */}
+            <div className="relative h-56 w-full bg-slate-900 overflow-hidden">
+              <img
+                src={liveProgram.cardBgImage}
+                alt={liveProgram.title}
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent pointer-events-none"></div>
 
-        <div className="relative bg-gradient-to-b from-[#4b2766]/95 to-[#2e1542]/95 backdrop-blur-xl border border-white/15 rounded-full shadow-[0_12px_40px_rgba(46,21,66,0.6)] p-3 flex flex-col items-center justify-between gap-5 transition-transform hover:scale-105 duration-300 group">
-          {/* Play Button */}
+              {/* Close Button */}
+              <button
+                onClick={() => setIsMobileCardOpen(false)}
+                className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center transition-colors cursor-pointer"
+                title="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Presenter & Title */}
+              <div className="absolute bottom-3.5 left-4 right-4 text-left pointer-events-none">
+                <span className="block text-[11px] font-black text-amber-300 uppercase tracking-widest leading-none drop-shadow">
+                  {liveProgram.host ? liveProgram.host : "NO AR AGORA"}
+                </span>
+                <h4 className="text-white font-[1000] text-base uppercase tracking-tight leading-tight mt-1 drop-shadow-md">
+                  {liveProgram.title}
+                </h4>
+              </div>
+            </div>
+
+            {/* Bottom Controls */}
+            <div className="p-4 bg-white flex items-center justify-between gap-3">
+              <button
+                onClick={togglePlay}
+                className="w-14 h-14 rounded-full bg-[#ff3e5e] hover:bg-[#e62e4e] text-white flex items-center justify-center shadow-lg ring-4 ring-[#ff3e5e]/25 hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
+                title={isPlaying ? "Pausar transmissão" : "Ouvir rádio ao vivo"}
+              >
+                {isPlaying ? (
+                  <Pause className="w-6 h-6 fill-current" />
+                ) : (
+                  <Play className="w-6 h-6 fill-current ml-1" />
+                )}
+              </button>
+
+              <div className="flex flex-col text-right min-w-0 pr-1">
+                <div className="flex items-center justify-end gap-1.5 text-[11px] font-extrabold text-[#ff3e5e] leading-none uppercase">
+                  <span className={`w-2 h-2 rounded-full ${isPlaying ? "bg-[#ff3e5e] animate-pulse" : "bg-slate-400"}`}></span>
+                  <span>AO VIVO</span>
+                </div>
+                <span className="text-[#4b2766] font-[1000] text-xl tracking-tight leading-none mt-1">
+                  87.9 FM
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Side Floating Player (Matches image_c4ae59ed.png exactly) */}
+      <aside
+        aria-label="Player de Rádio ao Vivo"
+        className="hidden md:block fixed right-6 top-1/2 -translate-y-1/2 z-[60] w-52 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.25)] overflow-hidden border border-slate-100 transition-all hover:scale-102 select-none"
+      >
+        {/* Top: Dynamic Show Background Image & Presenter/Show Title */}
+        <div className="relative h-48 w-full bg-slate-900 overflow-hidden">
+          <img
+            key={liveProgram.id}
+            src={liveProgram.cardBgImage}
+            alt={liveProgram.title}
+            className="w-full h-full object-cover object-center transition-all duration-700"
+          />
+          {/* Gradient Overlay for Typography Contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent pointer-events-none"></div>
+
+          {/* Presenter / Live Typography */}
+          <div className="absolute bottom-3 left-3.5 right-3.5 text-left pointer-events-none">
+            <span className="block text-[10px] font-black text-amber-300 uppercase tracking-widest leading-none drop-shadow">
+              {liveProgram.host ? liveProgram.host : "NO AR AGORA"}
+            </span>
+            <h4 className="text-white font-[1000] text-sm uppercase tracking-tight leading-tight mt-1 drop-shadow-md line-clamp-2">
+              {liveProgram.title}
+            </h4>
+          </div>
+        </div>
+
+        {/* Bottom: Play Button and Frequency */}
+        <div className="p-3.5 bg-white flex items-center justify-between gap-2.5">
+          {/* Circular Red Play/Pause Button with soft outer ring */}
           <button
             onClick={togglePlay}
-            className="w-14 h-14 flex-shrink-0 bg-gradient-to-tr from-[#ff3e5e] to-[#ff7a8e] rounded-full flex items-center justify-center shadow-lg hover:shadow-[0_0_25px_rgba(255,62,94,0.6)] transition-all relative focus:outline-none overflow-hidden group/play cursor-pointer"
+            className="w-14 h-14 rounded-full bg-[#ff3e5e] hover:bg-[#e62e4e] text-white flex items-center justify-center shadow-lg ring-4 ring-[#ff3e5e]/25 hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
+            title={isPlaying ? "Pausar transmissão" : "Ouvir rádio ao vivo"}
+            aria-label={isPlaying ? "Pausar transmissão" : "Ouvir rádio ao vivo"}
           >
-            {isPlaying && (
-              <span className="absolute inset-0 rounded-full animate-ping bg-white opacity-20"></span>
+            {isPlaying ? (
+              <Pause className="w-6 h-6 fill-current" />
+            ) : (
+              <Play className="w-6 h-6 fill-current ml-1" />
             )}
-            <div className="absolute inset-0 bg-black/10 group-hover/play:bg-transparent transition-colors"></div>
-            <div className="relative z-10 flex items-center justify-center w-full h-full rounded-full">
-              {isPlaying ? (
-                <Pause className="w-6 h-6 fill-white drop-shadow-md" />
-              ) : (
-                <Play className="w-6 h-6 fill-white ml-1 drop-shadow-md" />
-              )}
-            </div>
           </button>
 
-          {/* Interactive Volume Control */}
-          <div
-            className="relative flex flex-col items-center group/vol"
-            onMouseEnter={() => setShowVolumeSlider(true)}
-            onMouseLeave={() => setShowVolumeSlider(false)}
-          >
-            {/* Expandable vertical mini-slider */}
-            <div
-              className={`absolute right-14 top-1/2 -translate-y-1/2 bg-[#2d143f]/95 backdrop-blur-md rounded-2xl px-3 py-3 border border-white/15 shadow-2xl transition-all duration-300 flex items-center gap-3 ${showVolumeSlider ? "opacity-100 translate-x-0 scale-100" : "opacity-0 translate-x-4 scale-90 pointer-events-none"}`}
-            >
-              <span className="text-[10px] font-black text-[#fce315] font-mono min-w-[28px] text-center">
-                {isMuted ? "MUTE" : `${Math.round(volume * 100)}%`}
-              </span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={isMuted ? 0 : volume}
-                onChange={(e) => {
-                  setVolume(parseFloat(e.target.value));
-                  setIsMuted(false);
-                }}
-                className="w-16 h-1 bg-white/20 accent-[#ff3e5e] rounded-full cursor-pointer"
-              />
+          {/* Frequency & Live Indicator */}
+          <div className="flex flex-col text-right min-w-0 pr-1">
+            <div className="flex items-center justify-end gap-1.5 text-[11px] font-extrabold text-[#ff3e5e] leading-none uppercase">
+              <span className={`w-2 h-2 rounded-full ${isPlaying ? "bg-[#ff3e5e] animate-pulse" : "bg-slate-400"}`}></span>
+              <span>AO VIVO</span>
             </div>
-
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/12 border border-white/5 transition-all text-white/80 hover:text-[#fce315] hover:scale-110 cursor-pointer"
-              title={isMuted ? "Ativar som (Unmute)" : "Desativar som (Mute)"}
-            >
-              {isMuted || volume === 0 ? (
-                <VolumeX className="w-5 h-5 text-[#ff3e5e] animate-pulse" />
-              ) : (
-                <Volume2
-                  className={`w-5 h-5 ${isPlaying ? "text-[#fce315]" : ""}`}
-                />
-              )}
-            </button>
-          </div>
-
-          {/* Info */}
-          <div className="flex flex-col items-center gap-4 my-1">
-            <span className="[writing-mode:vertical-rl] rotate-180 font-[900] text-[10px] text-white/70 tracking-[0.25em] uppercase drop-shadow-sm flex items-center gap-2 select-none">
-              Clube FM
+            <span className="text-[#4b2766] font-[1000] text-xl tracking-tight leading-none mt-1">
+              87.9 FM
             </span>
-            <div
-              className={`flex flex-col items-center gap-2 transition-all duration-500 ${isPlaying ? "opacity-100" : "opacity-40 grayscale"}`}
-            >
-              <div className="flex items-end justify-center gap-1 h-5">
-                <span
-                  className={`w-1.5 bg-[#fce315] rounded-full ${isPlaying ? "animate-bounce [animation-delay:0ms] [animation-duration:1s]" : "h-1.5"}`}
-                ></span>
-                <span
-                  className={`w-1.5 bg-[#fce315] rounded-full ${isPlaying ? "animate-bounce [animation-delay:200ms] [animation-duration:1s]" : "h-3.5"}`}
-                ></span>
-                <span
-                  className={`w-1.5 bg-[#fce315] rounded-full ${isPlaying ? "animate-bounce [animation-delay:400ms] [animation-duration:1s]" : "h-2"}`}
-                ></span>
-              </div>
-              <span className="text-[10px] font-black text-[#fce315] uppercase tracking-widest leading-none drop-shadow-sm">
-                Ao vivo
-              </span>
-            </div>
-          </div>
-
-          {/* WhatsApp Button */}
-          <div className="relative">
-            <div className="absolute -inset-2 bg-[#25D366]/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <a
-              href="https://wa.me/5548991950093"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative group/wa overflow-hidden bg-gradient-to-tr from-[#128C7E] to-[#25D366] w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border border-white/20 shrink-0 shadow-lg hover:shadow-xl hover:scale-110"
-            >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/wa:translate-y-0 transition-transform duration-300 ease-out"></div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="white"
-                stroke="none"
-                className="w-5 h-5 relative z-10 drop-shadow-md"
-              >
-                <path d="M12.031 0A12 12 0 0 0 0 12c0 2.115.553 4.108 1.542 5.867L.18 23.518l5.807-1.514A11.972 11.972 0 0 0 12.031 24c6.627 0 12-5.373 12-12s-5.373-12-12-12zm6.657 17.15c-.279.79-1.343 1.517-2.072 1.637-.73.12-1.748.337-5.597-1.258-4.63-1.92-7.653-6.666-7.882-6.974-.23-.307-1.884-2.508-1.884-4.786s1.173-3.398 1.583-3.834c.41-.437.892-.547 1.19-.547.297 0 .596.012.86.026.275.014.646-.107.994.733.364.876 1.19 2.909 1.295 3.126.107.218.18.472.046.732-.132.261-.202.424-.4.636-.2.21-.418.468-.598.648-.198.196-.407.411-.18 2.015.632 1.748 1.83 2.998 3.018 3.996C14.07 15.358 14.887 15.228 15.118 14.935c.23-.294 1.01-1.178 1.288-1.582.277-.405.553-.338.92-.203.367.135 2.327 1.096 2.723 1.294.397.198.66.297.755.462.097.165.097.962-.182 1.75z" />
-              </svg>
-            </a>
           </div>
         </div>
-      </div>
+      </aside>
 
-      {/* Clube Maníacos Newsletter */}
+      {/* Comunidade VIP Clube FM (Matching image_c0b85fc6.png) */}
       <section
         id="vip"
-        className="relative bg-[#fce315] py-20 px-4 overflow-hidden"
+        className="relative bg-[#fce315] py-14 sm:py-16 px-4 sm:px-6 overflow-hidden select-none"
       >
+        {/* Ambient Studio Background Photo */}
         <div
-          className="absolute inset-0 z-0 opacity-20 mix-blend-multiply"
+          className="absolute inset-0 pointer-events-none opacity-30 bg-cover bg-center"
           style={{
             backgroundImage:
-              "url('https://radioclubecriciuma.com/imagens/estudio.jpeg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+              "url('https://radioclubecriciuma.com/imagens/estudioclubefm.png')",
           }}
         ></div>
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-[#663b86] mb-3">
+
+        <div className="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
+          {/* Official Station Mascot in VIP */}
+          <div className="relative mb-3 inline-flex items-center justify-center">
+            <img
+              src="https://radioclubecriciuma.com/imagens/mascote.png"
+              alt="Mascote Clube FM Criciúma"
+              className="h-28 sm:h-36 md:h-40 w-auto object-contain drop-shadow-2xl transition-transform duration-300 hover:scale-105 select-none"
+            />
+            {/* Friendly Mascot Badge */}
+            <span className="absolute -top-1 -right-6 sm:-right-8 bg-[#3d1b54] text-[#fce315] text-[10px] sm:text-xs font-black px-3 py-1 rounded-full shadow-lg border-2 border-[#fce315]/40 whitespace-nowrap animate-bounce [animation-duration:3s]">
+              Vem pro VIP! 🎁
+            </span>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-[950] text-[#3d1b54] tracking-tight mb-2">
             Comunidade VIP Clube FM Criciúma
           </h2>
-          <div className="w-10 h-[2px] bg-[#663b86] mx-auto mb-8"></div>
-          <p className="text-slate-700 font-semibold mb-12 max-w-lg mx-auto">
-            Cadastre-se na Rádio Clube FM Criciúma e concorra a prêmios
-            incríveis, ingressos e brindes exclusivos da nossa promoção.
+          <div className="w-16 h-1 bg-[#3d1b54] mx-auto mb-4 rounded-full"></div>
+
+          <p className="text-[#3d1b54] font-bold text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
+            Cadastre-se na Rádio Clube FM Criciúma e concorra a prêmios incríveis, ingressos e brindes exclusivos da nossa promoção.
           </p>
 
-          <div className="relative rounded-[2rem] overflow-hidden p-1 max-w-4xl mx-auto">
-            {/* Smooth transition glassmorphism submitting feedback */}
+          <div className="relative max-w-4xl mx-auto">
             {isSubmitting && (
-              <div className="absolute inset-0 z-20 bg-[#5c337c]/95 backdrop-blur-md rounded-2xl flex flex-col justify-center items-center gap-4 text-white animated-fade-in py-10 px-6">
-                <div className="w-14 h-14 rounded-full border-4 border-[#fce315]/30 border-t-[#fce315] animate-spin"></div>
-                <div className="text-center space-y-1">
-                  <h3 className="text-2xl font-black text-[#fce315] tracking-tight">
-                    Quase lá, {clubeName || "Amigo(a)"}!
-                  </h3>
-                  <p className="text-sm font-semibold text-white/90 max-w-md">
-                    Estamos preparando seus dados. Nós iremos redirecionar você
-                    para o WhatsApp em instantes...
-                  </p>
+              <div className="absolute inset-0 z-20 bg-[#3d1b54]/95 text-white rounded-3xl flex flex-col justify-center items-center gap-3 p-6 backdrop-blur-sm">
+                <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-[#fce315] animate-spin"></div>
+                <div className="text-center">
+                  <h3 className="text-lg font-bold text-white">Preparando seu cadastro...</h3>
+                  <p className="text-xs text-slate-300">Redirecionando para o WhatsApp do ouvinte.</p>
                 </div>
               </div>
             )}
 
             <form
               onSubmit={handleClubeSubmit}
-              className="flex flex-col md:flex-row gap-4 justify-center items-center mb-8 w-full"
+              className="flex flex-col sm:flex-row items-center justify-center gap-3"
             >
               <input
                 type="text"
@@ -1054,7 +1215,7 @@ export default function App() {
                 placeholder="Seu nome*"
                 value={clubeName}
                 onChange={(e) => setClubeName(e.target.value)}
-                className="w-full md:w-1/4 px-6 py-3.5 rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#663b86] outline-none text-sm font-semibold text-slate-800 bg-white"
+                className="w-full sm:w-auto flex-1 px-5 py-3.5 rounded-full bg-white text-slate-900 placeholder:text-slate-400 text-sm font-bold shadow-md outline-none border border-amber-200/50 focus:ring-2 focus:ring-[#3d1b54]"
               />
               <input
                 type="email"
@@ -1062,7 +1223,7 @@ export default function App() {
                 placeholder="Seu melhor email*"
                 value={clubeEmail}
                 onChange={(e) => setClubeEmail(e.target.value)}
-                className="w-full md:w-1/4 px-6 py-3.5 rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#663b86] outline-none text-sm font-semibold text-slate-800 bg-white"
+                className="w-full sm:w-auto flex-1 px-5 py-3.5 rounded-full bg-white text-slate-900 placeholder:text-slate-400 text-sm font-bold shadow-md outline-none border border-amber-200/50 focus:ring-2 focus:ring-[#3d1b54]"
               />
               <input
                 type="tel"
@@ -1071,172 +1232,156 @@ export default function App() {
                 value={clubePhone}
                 onChange={handlePhoneChange}
                 maxLength={15}
-                className="w-full md:w-1/4 px-6 py-3.5 rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#663b86] outline-none text-sm font-semibold text-slate-800 bg-white"
+                className="w-full sm:w-auto flex-1 px-5 py-3.5 rounded-full bg-white text-slate-900 placeholder:text-slate-400 text-sm font-bold shadow-md outline-none border border-amber-200/50 focus:ring-2 focus:ring-[#3d1b54]"
               />
               <button
                 type="submit"
-                className="w-full md:w-1/4 bg-[#ff3864] text-white font-[950] rounded-full py-4 text-[11px] uppercase tracking-wider hover:bg-rose-500 transition-colors shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 duration-300 cursor-pointer"
+                className="w-full sm:w-auto bg-[#ff3e5e] hover:bg-pink-600 text-white font-[950] text-xs uppercase tracking-wider rounded-full py-3.5 px-7 transition-all shadow-lg hover:shadow-xl hover:scale-103 active:scale-95 shrink-0 cursor-pointer"
               >
                 CADASTRE-SE NO VIP
               </button>
             </form>
           </div>
 
-          <p className="text-[13px] text-slate-500/80 font-medium">
+          <p className="text-[#3d1b54]/80 text-xs mt-4 font-bold">
             Ao se cadastrar você concorda em enviar o convite pelo WhatsApp.
           </p>
         </div>
       </section>
 
-      {/* Main Footer */}
-      <footer className="bg-[#4a245e] text-white pt-16 pb-24 sm:pb-12 border-t-[8px] border-[#ff3e5e] relative overflow-hidden">
-        {/* Background Image */}
+      {/* Vibrant Magenta Divider Stripe */}
+      <div className="h-2 bg-[#ff3e5e] w-full"></div>
+
+      {/* Corporate Footer (Matching image_c0b85fc6.png) */}
+      <footer className="relative bg-[#3a1b4d] text-white pt-12 pb-16 px-4 sm:px-6 overflow-hidden">
+        {/* Studio Background Photo Overlay */}
         <div
-          className="absolute inset-0 z-0 opacity-10 mix-blend-overlay"
+          className="absolute inset-0 pointer-events-none opacity-10 bg-cover bg-center mix-blend-overlay"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=1600&q=80')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+              "url('https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80')",
           }}
         ></div>
 
-        {/* Decorative background blurs */}
-        <div className="absolute top-0 right-0 -mt-32 -mr-32 w-96 h-96 bg-[#ff3e5e] rounded-full blur-[140px] opacity-30 pointer-events-none z-0"></div>
-        <div className="absolute bottom-0 left-0 -mb-32 -ml-32 w-96 h-96 bg-[#fce315] rounded-full blur-[140px] opacity-20 pointer-events-none z-0"></div>
-
-        <div className="max-w-6xl mx-auto px-6 relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
-          {/* Logo & Address */}
-          <div className="flex flex-col items-center md:items-start md:w-1/2">
-            <div className="text-center md:text-left space-y-1.5 w-full flex flex-col items-center md:items-start">
-              <a href="#" className="inline-block mb-3 hover:scale-105 transition-transform">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start pb-10 border-b border-white/10">
+            {/* LEFT COLUMN: Logo & Address & Partners */}
+            <div className="space-y-4 text-left">
+              <a href="#" className="inline-block">
                 <img
                   src={CLUBE_LOGO}
                   alt="Rádio Clube FM Criciúma 87.9"
-                  className="h-16 md:h-20 w-auto object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+                  className="h-16 w-auto object-contain"
                 />
               </a>
-              <h3 className="font-extrabold text-lg text-white tracking-tight drop-shadow-sm">
-                Rádio Clube FM Criciúma
-              </h3>
-              <p className="text-[13px] text-white/80 leading-relaxed font-medium">
-                Rua Vendramino Dajori, 85 - Bairro Imigrantes
-                <br />
-                Fundos da Cermoful - Criciúma, SC, Brasil
+
+              <div className="space-y-1 text-xs text-slate-300 font-medium">
+                <h3 className="text-white font-[950] text-base tracking-tight">
+                  Rádio Clube FM Criciúma
+                </h3>
+                <p>Rua Vendramino Dajori, 85 - Bairro Imigrantes</p>
+                <p>Fundos da Cermoful - Criciúma, SC, Brasil</p>
+              </div>
+
+              <div className="pt-2 border-t border-white/10 max-w-md">
+                <h4 className="text-[#fce315] font-[950] text-[11px] uppercase tracking-widest mb-3">
+                  PARCEIROS & OPORTUNIDADES
+                </h4>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <a
+                    href="https://www.vitrinedosul.com.br"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all shadow-sm"
+                  >
+                    <img
+                      src={VITRINE_LOGO}
+                      alt="Vitrine do Sul"
+                      className="h-6 w-auto object-contain"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = LOCAL_VITRINE_LOGO;
+                      }}
+                    />
+                    <div className="flex flex-col text-left">
+                      <span className="text-white font-black text-xs leading-none">Vitrine do Sul</span>
+                      <span className="text-[10px] text-[#fce315] font-extrabold uppercase tracking-wider mt-0.5">VER NOTÍCIAS</span>
+                    </div>
+                  </a>
+
+                  <button
+                    onClick={() => setShowAnunciarModal(true)}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#ff3e5e] hover:bg-pink-600 text-white font-[950] text-xs uppercase tracking-wider shadow-lg hover:scale-102 transition-all cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 fill-current" />
+                    <span>DEPARTAMENTO COMERCIAL</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: Headline, Subtitle & Social Networks */}
+            <div className="flex flex-col items-start md:items-end text-left md:text-right space-y-3">
+              <h2 className="text-[#fce315] font-[1000] text-2xl sm:text-3xl uppercase tracking-wider leading-tight">
+                A NÚMERO UM EM CRICIÚMA!
+              </h2>
+
+              <p className="text-slate-200 text-xs sm:text-sm font-semibold max-w-md leading-relaxed">
+                Sintonize na frequência da alegria. Informação local, prêmios e a melhor seleção musical da sua vida.
               </p>
 
-              <div className="flex flex-col items-center md:items-start pt-4 mt-4 border-t border-white/15 w-full">
-                <div className="flex flex-col items-center md:items-start w-full">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#fce315]/90 mb-2">
-                    Parceiros & Oportunidades
-                  </span>
-                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                    <a
-                      href="https://www.vitrinedosul.com.br"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2.5 px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 group/partner shadow-sm"
-                    >
-                      <img
-                        src={VITRINE_LOGO}
-                        alt="Portal Vitrine do Sul"
-                        loading="lazy"
-                        className="h-8 w-auto object-contain transition-transform duration-300 group-hover/partner:scale-105"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = LOCAL_VITRINE_LOGO;
-                        }}
-                      />
-                      <div className="flex flex-col text-left">
-                        <span className="text-[10px] font-extrabold text-slate-200 group-hover/partner:text-[#fce315] transition-colors leading-none">
-                          Vitrine do Sul
-                        </span>
-                        <span className="text-[8px] font-bold text-white/50 tracking-wider mt-1 uppercase">
-                          Ver Notícias
-                        </span>
-                      </div>
-                    </a>
+              <div className="pt-4">
+                <span className="block text-slate-300 text-[11px] font-black uppercase tracking-widest mb-2">
+                  SIGA NOSSAS REDES
+                </span>
 
-
-
-                    <a
-                      href="/comercial"
-                      className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-[#ff3e5e] to-[#ff3864] hover:from-rose-500 hover:to-rose-600 border border-transparent rounded-xl transition-all duration-300 shadow-md text-[11px] font-[900] text-white uppercase tracking-wider hover:scale-103 cursor-pointer"
-                    >
-                      <Megaphone className="w-3.5 h-3.5" />
-                      Departamento Comercial
-                    </a>
-                  </div>
+                <div className="flex items-center justify-start md:justify-end gap-3">
+                  <a
+                    href="https://www.facebook.com/profile.php?id=61593649783878"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full bg-white/15 hover:bg-[#ff3e5e] text-white flex items-center justify-center transition-all shadow-md cursor-pointer"
+                    title="Facebook Oficial"
+                    aria-label="Facebook"
+                  >
+                    <Facebook className="w-4 h-4 fill-current" />
+                  </a>
+                  <a
+                    href="https://www.instagram.com/radioclubefmcriciuma/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full bg-white/15 hover:bg-[#ff3e5e] text-white flex items-center justify-center transition-all shadow-md cursor-pointer"
+                    title="Instagram Oficial"
+                    aria-label="Instagram"
+                  >
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                  <a
+                    href="https://www.youtube.com/@radioclubefmcriciuma/streams"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full bg-white/15 hover:bg-[#ff3e5e] text-white flex items-center justify-center transition-all shadow-md cursor-pointer"
+                    title="YouTube Oficial"
+                    aria-label="YouTube"
+                  >
+                    <Youtube className="w-4 h-4 fill-current" />
+                  </a>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Social Links & Slogan */}
-          <div className="flex flex-col items-center md:items-end space-y-6 md:w-1/2 text-center md:text-right">
-            <div className="max-w-xs">
-              <h3 className="text-[#fce315] font-[900] text-xl uppercase tracking-widest drop-shadow-sm mb-3">
-                A número um em Criciúma!
-              </h3>
-              <p className="text-[13px] text-white/90 leading-relaxed font-medium">
-                Sintonize na frequência da alegria. Informação local, prêmios e
-                a melhor seleção musical da sua vida.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-[11px] uppercase tracking-[0.1em] text-white/80 mb-3">
-                Siga nossas redes
-              </h4>
-              <div className="flex space-x-4 justify-center md:justify-end">
-                <a
-                  href="https://www.facebook.com/profile.php?id=61593649783878"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm text-white flex items-center justify-center hover:bg-[#1877F2] hover:-translate-y-1 transition-all duration-300 shadow-md border border-white/20 hover:border-transparent"
-                >
-                  <Facebook className="w-5 h-5 fill-current" />
-                </a>
-                <a
-                  href="https://www.instagram.com/radioclubefmcriciuma/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm text-white flex items-center justify-center hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] hover:-translate-y-1 transition-all duration-300 shadow-md border border-white/20 hover:border-transparent"
-                >
-                  <Instagram className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://www.youtube.com/@radioclubefmcriciuma/streams"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm text-white flex items-center justify-center hover:bg-[#FF0000] hover:-translate-y-1 transition-all duration-300 shadow-md border border-white/20 hover:border-transparent"
-                >
-                  <Youtube className="w-5 h-5 fill-current" />
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Copyright Bar */}
-        <div className="max-w-6xl mx-auto px-6 mt-12 relative z-10">
-          <div className="border-t border-white/20 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-white/70">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 text-center sm:text-left mb-4 sm:mb-0">
-              <p className="font-semibold text-white/90">
-                © {new Date().getFullYear()} Rádio Clube FM. Todos os direitos
-                reservados.
-              </p>
-            </div>
-            <p className="mt-4 sm:mt-0 font-medium flex items-center justify-center sm:justify-start gap-1">
-              Desenvolvido com{" "}
-              <Heart className="w-3.5 h-3.5 fill-[#ff3e5e] text-[#ff3e5e]" />{" "}
-              por{" "}
+          {/* Copyright Bar */}
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-300 font-semibold gap-4">
+            <p>© {new Date().getFullYear()} Rádio Clube FM. Todos os direitos reservados.</p>
+            <p className="flex items-center gap-1">
+              <span>Desenvolvido com ❤️ por</span>
               <a
                 href="https://www.innovetecnologia.com.br"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#fce315] font-bold hover:underline transition-colors"
+                className="text-[#fce315] font-black hover:underline ml-1"
               >
                 Innove Tecnologia
               </a>
@@ -1250,38 +1395,38 @@ export default function App() {
       {showAnunciarModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
           {/* Modal Container */}
-          <div className="relative bg-white text-slate-800 rounded-[2.5rem] w-full max-w-4xl shadow-2xl border border-slate-100 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-300">
-            {/* Fancy top colorful bar */}
-            <div className="h-2 bg-gradient-to-r from-[#5c337c] via-[#ff3e5e] to-[#fce315]"></div>
+          <div className="relative bg-white text-slate-800 rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+            {/* Red accent top bar */}
+            <div className="h-1.5 bg-[#ff3e5e]"></div>
             
             {/* Modal Header */}
-            <div className="p-6 sm:p-10 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white flex justify-between items-start">
+            <div className="p-6 sm:p-8 border-b border-slate-200 bg-slate-50 flex justify-between items-start">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#ff3e5e]/10 text-[#ff3e5e] rounded-2xl flex items-center justify-center shrink-0">
-                  <Megaphone className="w-6 h-6 animate-pulse" />
+                <div className="w-12 h-12 bg-[#ff3e5e]/10 text-[#ff3e5e] rounded-xl flex items-center justify-center shrink-0">
+                  <Megaphone className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="bg-[#5c337c]/10 text-[#5c337c] text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider">
+                    <span className="bg-slate-200/80 text-slate-700 text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wider">
                       Oportunidade Comercial
                     </span>
-                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      Atendimento Ativo
                     </span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-black text-[#5c3e7b] tracking-tight mt-1 leading-none">
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1 leading-none">
                     Como Anunciar na Clube FM
                   </h2>
-                  <p className="text-xs sm:text-xs text-slate-500 font-medium mt-1 uppercase tracking-wider">
-                    Divulgue sua marca na rádio número um de Criciúma
+                  <p className="text-xs text-slate-500 font-medium mt-1">
+                    Divulgue sua marca na rádio número um de Criciúma e Região
                   </p>
                 </div>
               </div>
               
               <button
                 onClick={() => setShowAnunciarModal(false)}
-                className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all duration-300 cursor-pointer shadow-sm border border-slate-200"
+                className="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer border border-slate-200"
                 title="Fechar"
               >
                 <X className="w-5 h-5" />
@@ -1289,15 +1434,14 @@ export default function App() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 sm:p-10 overflow-y-auto max-h-[60vh] space-y-8">
+            <div className="p-6 sm:p-8 overflow-y-auto max-h-[60vh] space-y-6">
               {/* Main Banner pitch */}
-              <div className="bg-gradient-to-br from-[#5c337c]/5 via-white to-[#ff3e5e]/5 p-6 rounded-3xl border border-slate-100/80 relative overflow-hidden">
-                <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 w-48 h-48 bg-[#fce315]/10 rounded-full blur-3xl pointer-events-none"></div>
-                <h3 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight mb-2 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#ff3e5e]" />
+              <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 text-slate-800">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight mb-1 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#ff3e5e]" />
                   Acelere os Resultados da Sua Empresa
                 </h3>
-                <p className="text-slate-600 text-sm leading-relaxed font-medium">
+                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
                   Anunciar na <strong>Clube FM Criciúma</strong> é ter a certeza de que a sua marca estará presente no dia a dia da região carbonífera. Através do rádio convencional, aplicativo oficial, e redes integradas, alcançamos milhares de clientes em potencial todos os dias, com alta retenção e retorno garantido.
                 </p>
               </div>
@@ -1374,7 +1518,7 @@ export default function App() {
               </div>
 
               {/* Action Commercial WhatsApp Contact CTA Area */}
-              <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="space-y-1 text-center md:text-left">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-600 text-xs font-black rounded-full uppercase tracking-wider">
                     Fale Direto com o Consultor
