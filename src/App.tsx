@@ -557,6 +557,38 @@ export default function App() {
           </div>
         </section>
 
+        {/* Publicidade Cermoful - Acima dos Destaques (Visível para Computador e Celular) */}
+        <div className="max-w-7xl mx-auto px-4 pt-6 sm:pt-8 pb-2">
+          <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
+            {/* Header da Publicidade */}
+            <div className="w-full flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-widest px-1 mb-2">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ff3e5e]"></span>
+                Espaço Publicitário
+              </span>
+              <span>Cermoful Energia</span>
+            </div>
+
+            {/* Banner Link e Imagem */}
+            <a
+              href="https://www.cermoful.com.br/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group block w-full rounded-2xl overflow-hidden bg-white border border-slate-200/90 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.01]"
+              title="Acessar Cermoful Energia"
+            >
+              <img
+                src="https://radioclubecriciuma.com/imagens/cermoful.jpeg"
+                alt="Publicidade Cermoful Energia"
+                loading="lazy"
+                width={784}
+                height={158}
+                className="w-full h-auto object-contain block mx-auto transition-opacity duration-300 group-hover:opacity-95"
+              />
+            </a>
+          </div>
+        </div>
+
         {/* Eventos, Prêmios e Programação - Carrossel de Cards */}
         <div id="destaques">
           <HighlightsSlider />
